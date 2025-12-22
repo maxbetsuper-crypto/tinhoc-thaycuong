@@ -5,23 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Đam Mê Tin Học - Thầy Lê Đình Cương</title>
     
-    <!-- 1. Thư viện giao diện & xử lý -->
+    <!-- CSS Framework -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM (UMD - Chạy trực tiếp) -->
+    <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Excel Library -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 
-    <!-- 2. Cấu hình Import Map (Giúp trình duyệt tải React không bị lỗi) -->
-    <script type="importmap">
-    {
-      "imports": {
-        "react": "https://esm.sh/react@18.2.0",
-        "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
-        "lucide-react": "https://esm.sh/lucide-react@0.263.1"
-      }
-    }
-    </script>
-
-    <!-- 3. Firebase SDK (Phiên bản tương thích web) -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
@@ -30,22 +27,26 @@
         body { font-family: 'Be Vietnam Pro', sans-serif; }
         .animate-in { animation: fadeIn 0.5s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        /* Tùy chỉnh thanh cuộn */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f5f9; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        /* Màn hình lỗi */
+        #crash-screen { display: none; padding: 20px; background: #fee2e2; color: #b91c1c; position: fixed; inset: 0; z-index: 9999; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased">
+    <div id="crash-screen">
+        <h1 class="text-2xl font-bold">⚠️ Ứng dụng gặp sự cố!</h1>
+        <p id="error-message">Vui lòng kiểm tra lại kết nối mạng hoặc liên hệ quản trị viên.</p>
+    </div>
     <div id="root"></div>
 
-    <script type="text/babel" data-type="module">
-        import React, { useState, useEffect, useRef } from 'react';
-        import { createRoot } from 'react-dom/client';
-        import { BookOpen, CheckCircle, XCircle, Trophy, User, Smartphone, Play, RefreshCcw, Star, Edit3, HelpCircle, Brain, Upload, Download, Sparkles, Loader2, Users, Lock, List, Trash2, LogOut, Calendar, Database, Terminal, Code, Monitor, Phone, Key, Gamepad2, Plus, X, Cloud, CloudOff } from 'lucide-react';
+    <script>
+        window.onerror = function(msg, url, line) {
+            document.getElementById('crash-screen').style.display = 'block';
+            document.getElementById('error-message').innerText = `${msg} (Dòng: ${line})`;
+        };
+    </script>
 
-        // --- 1. CẤU HÌNH FIREBASE CHÍNH CHỦ (ĐÃ CẬP NHẬT) ---
+    <script type="text/babel">
+        // --- 1. CẤU HÌNH FIREBASE CHÍNH XÁC ---
         const firebaseConfig = {
             apiKey: "AIzaSyD34vTzLFUOwVrWY0AjaWFMlNZwgFViG9E",
             authDomain: "tinhoc-thaycuong.firebaseapp.com",
@@ -55,26 +56,63 @@
             appId: "1:819810531720:web:37780de6f2bde759b6623d"
         };
 
-        // --- KHỞI TẠO KẾT NỐI ---
         let db = null;
         let isOnline = false;
         try {
-            if (typeof firebase !== 'undefined') {
+            if (typeof firebase !== 'undefined' && firebaseConfig.projectId) {
                 if (!firebase.apps.length) {
                     firebase.initializeApp(firebaseConfig);
                 }
                 db = firebase.firestore();
                 isOnline = true;
-                console.log("🔥 Đã kết nối Firebase thành công!");
+                console.log("🔥 Firebase connected!");
+            } else {
+                console.warn("⚠️ Running OFFLINE (LocalStorage).");
             }
-        } catch (e) { 
-            console.error("Lỗi kết nối Firebase:", e); 
-            console.log("⚠️ Chuyển sang chế độ Offline (Lưu trên máy).");
-        }
+        } catch (e) { console.error("Firebase init fail:", e); }
 
-        // --- 2. CẤU HÌNH ỨNG DỤNG ---
-        const BACKGROUND_IMAGE = "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=2070&auto=format&fit=crop"; 
+        const { useState, useEffect, useRef } = React;
         
+        // --- BỘ ICON SVG TỰ VẼ (An toàn tuyệt đối) ---
+        const Icon = ({ path, className = "", size = 24 }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                {path}
+            </svg>
+        );
+
+        const Icons = {
+            User: (props) => <Icon {...props} path={<><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>} />,
+            Smartphone: (props) => <Icon {...props} path={<><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></>} />,
+            Play: (props) => <Icon {...props} path={<polygon points="6 3 20 12 6 21 6 3"/>} />,
+            Lock: (props) => <Icon {...props} path={<><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></>} />,
+            Phone: (props) => <Icon {...props} path={<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>,
+            Monitor: (props) => <Icon {...props} path={<><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></>} />,
+            Code: (props) => <Icon {...props} path={<><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></>} />,
+            Gamepad: (props) => <Icon {...props} path={<><line x1="6" x2="10" y1="12" y2="12"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="15" x2="15.01" y1="13" y2="13"/><line x1="18" x2="18.01" y1="11" y2="11"/><rect width="20" height="12" x="2" y="6" rx="2"/></>} />,
+            Star: (props) => <Icon {...props} path={<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>} />,
+            CheckCircle: (props) => <Icon {...props} path={<><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></>} />,
+            HelpCircle: (props) => <Icon {...props} path={<><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></>} />,
+            Edit3: (props) => <Icon {...props} path={<><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></>} />,
+            BookOpen: (props) => <Icon {...props} path={<><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></>} />,
+            XCircle: (props) => <Icon {...props} path={<><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></>} />,
+            Trophy: (props) => <Icon {...props} path={<><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></>} />,
+            Refresh: (props) => <Icon {...props} path={<><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></>} />,
+            Key: (props) => <Icon {...props} path={<><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></>} />,
+            LogOut: (props) => <Icon {...props} path={<><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></>} />,
+            Database: (props) => <Icon {...props} path={<><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></>} />,
+            Download: (props) => <Icon {...props} path={<><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></>} />,
+            Upload: (props) => <Icon {...props} path={<><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></>} />,
+            Plus: (props) => <Icon {...props} path={<><path d="M5 12h14"/><path d="M12 5v14"/></>} />,
+            List: (props) => <Icon {...props} path={<><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></>} />,
+            Trash2: (props) => <Icon {...props} path={<><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></>} />,
+            Calendar: (props) => <Icon {...props} path={<><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></>} />,
+            X: (props) => <Icon {...props} path={<><path d="M18 6 6 18"/><path d="m6 6 12 12"/></>} />,
+            Cloud: (props) => <Icon {...props} path={<><path d="M17.5 19c0-1.7-1.3-3-3-3"/><path d="M3 16.1c0-.9 1.1-1.6 2-2.3 2-1.7 5.6-2.5 7.6-1.4a4.4 4.4 0 0 1 2.4 2.8c.8.3 1.7.3 2.5 0a3.9 3.9 0 0 1 2.5 2.1"/></>} />,
+            CloudOff: (props) => <Icon {...props} path={<><path d="m2 2 20 20"/><path d="M5.782 5.782A7 7 0 0 0 9 19h8.5a4.5 4.5 0 0 0 1.307-.193"/><path d="M21.532 16.5A4.5 4.5 0 0 0 17.5 10c-1.71 0-3.238.835-4.148 2.113"/></>} />
+        };
+
+        const BACKGROUND_IMAGE_URL = "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=2070&auto=format&fit=crop";
+
         const DEFAULT_CLASS_STRUCTURE = {
             6: ["6A1", "6A2", "6A3"], 
             7: ["7A1", "7A2", "7A3"],
@@ -82,9 +120,14 @@
             9: ["9A4", "9A5", "9A6"]
         };
 
-        // --- DỮ LIỆU CÂU HỎI MẶC ĐỊNH ---
+        // Dữ liệu từ các file đề cương
         const DEFAULT_QUESTION_BANK = {
-            6: { mcq: [{ id: 1, question: "Thông tin là gì?", options: ["Hiểu biết", "Con số", "Văn bản", "Hình ảnh"], correct: 0 }], tf: [], fill: [], essay: [] },
+            6: {
+                mcq: [{ id: 1, question: "Thông tin là gì?", options: ["Hiểu biết", "Con số", "Văn bản", "Hình ảnh"], correct: 0 }],
+                tf: [{ id: 1, question: "Máy tính cần hệ điều hành để hoạt động.", correct: true }],
+                fill: [{ id: 1, question: "Mạng máy tính gồm các thiết bị và ... kết nối.", answer: "đường truyền" }],
+                essay: [{ id: 1, question: "Tác hại của nghiện game?", hint: "Ảnh hưởng sức khỏe, học tập..." }]
+            },
             7: { 
                 mcq: [
                     { id: 1, question: "Mạng xã hội thường được tổ chức dưới dạng nào?", options: ["Website", "Sách giấy", "Đĩa CD", "Tờ rơi"], correct: 0 },
@@ -101,19 +144,19 @@
                     { id: 12, question: "Trong bảng tính, công thức được dùng để làm gì?", options: ["Nhập dữ liệu mới", "Tính toán trên dữ liệu", "Vẽ hình minh họa", "Đổi màu ô tính"], correct: 1 }
                 ],
                 tf: [
-                    { id: 1, question: "Cần giao tiếp lịch sự trên mạng.", correct: true },
-                    { id: 2, question: "Thoải mái chia sẻ mọi thông tin cá nhân.", correct: false },
-                    { id: 3, question: "Không dùng lời lẽ xúc phạm trên mạng.", correct: true },
-                    { id: 4, question: "Tin tức trên MXH luôn chính xác.", correct: false },
-                    { id: 5, question: "Bảng tính cấu tạo từ hàng và cột.", correct: true },
-                    { id: 6, question: "Ô là giao của hàng và cột.", correct: true },
-                    { id: 7, question: "Bảng tính chỉ vẽ tranh, không tính toán.", correct: false },
-                    { id: 8, question: "Phần mềm bảng tính hỗ trợ tính toán tự động.", correct: true }
+                    { id: 1, question: "Khi tham gia mạng Internet, cần giao tiếp lịch sự và có văn hóa.", correct: true },
+                    { id: 2, question: "Có thể thoải mái chia sẻ thông tin cá nhân của bản thân lên mạng xã hội.", correct: false },
+                    { id: 3, question: "Không nên sử dụng lời lẽ xúc phạm, thiếu văn hóa khi giao tiếp trên mạng.", correct: true },
+                    { id: 4, question: "Tin tức trên mạng xã hội luôn chính xác và đáng tin cậy.", correct: false },
+                    { id: 5, question: "Bảng tính được cấu tạo từ các hàng và các cột.", correct: true },
+                    { id: 6, question: "Ô trong bảng tính là vị trí giao nhau của một hàng và một cột.", correct: true },
+                    { id: 7, question: "Bảng tính chỉ dùng để vẽ tranh, không tính toán được.", correct: false },
+                    { id: 8, question: "Phần mềm bảng tính hỗ trợ thực hiện tính toán tự động.", correct: true }
                 ],
                 fill: [
                     { id: 1, question: "Hành vi tự ý đăng nhập vào tài khoản mạng xã hội của người khác là truy cập ...", answer: "không hợp lệ" },
                     { id: 2, question: "Nếu lỡ chia sẻ tin sai sự thật, em cần gỡ bài và ... ngay.", answer: "đính chính" },
-                    { id: 3, question: "Khối A1:B2 gồm bao nhiêu ô tính?", answer: "4" },
+                    { id: 3, question: "Khối ô A1:B2 gồm bao nhiêu ô tính?", answer: "4" },
                     { id: 4, question: "Copy công thức =B1*C1 từ A1 xuống A2, công thức mới là ...", answer: "=B2*C2" }
                 ],
                 essay: [
@@ -124,8 +167,8 @@
             },
             8: {
                 mcq: [
-                    { id: 1, question: "Tin học ứng dụng trong lĩnh vực nào?", options: ["Y tế", "Giáo dục", "Quốc phòng", "Cả A, B, C"], correct: 3 },
-                    { id: 2, question: "Nghề nghiệp thuộc lĩnh vực tin học?", options: ["Bán hàng", "Lập trình viên", "Vlogger", "NV Văn phòng"], correct: 1 },
+                    { id: 1, question: "Tin học ứng dụng trong lĩnh vực nào?", options: ["Y tế", "Giáo dục", "Quốc phòng", "Cả A, B, C đúng"], correct: 3 },
+                    { id: 2, question: "Nghề nghiệp thuộc lĩnh vực tin học?", options: ["Bán hàng online", "Lập trình viên", "Vlogger", "Nhân viên văn phòng"], correct: 1 },
                     { id: 3, question: "Trong thực tế, tỉ lệ nam nữ trong các ngành nghề tin học như thế nào?", options: ["Nam < Nữ", "Nữ < Nam (Tỉ lệ nữ còn thấp)", "Cả A, B đúng", "Cả A, B sai"], correct: 0 },
                     { id: 4, question: "Hậu quả của bất bình đẳng giới trong sử dụng máy tính?", options: ["Phụ nữ ít cơ hội nghề nghiệp", "Phụ nữ không theo kịp XH", "Phụ nữ ít cơ hội tiếp cận TB", "Cả A, B, C đúng"], correct: 3 },
                     { id: 5, question: "Thông tin được mã hóa thành dạng nào để chuyển vào máy tính?", options: ["Kí tự", "Hình ảnh", "Dãy bit", "Âm thanh"], correct: 2 },
@@ -134,9 +177,9 @@
                     { id: 8, question: "Tìm thông tin quyên góp bão lũ ở đâu tin cậy nhất?", options: ["Cổng TT Chính phủ", "Facebook cá nhân", "Web lạ", "Tin đồn"], correct: 0 },
                     { id: 9, question: "Sự khác biệt chính giữa thuật toán và chương trình?", options: ["Thuật toán là ngôn ngữ máy", "Thuật toán là ý tưởng, chương trình là lệnh thực thi", "Cả hai là mã lệnh", "Thuật toán là phần cứng"], correct: 1 },
                     { id: 10, question: "Phát biểu nào sau đây là SAI?", options: ["Thuật toán là dãy các bước", "Các bước thực hiện tuần tự", "Chương trình điều khiển máy tính", "Một biến nhớ nhận nhiều giá trị cùng lúc"], correct: 3 },
-                    { id: 11, question: "Biểu thức có giá trị True?", options: ["10+9 <= 11", "25-3 < 12", "2*10 < 31", "14-5 > 13"], correct: 2 },
-                    { id: 12, question: "Tin học giúp làm gì nhanh hơn?", options: ["Viết tay", "Lưu trữ & Xử lý TT", "Vẽ thủ công", "Ghi sổ"], correct: 1 },
-                    { id: 13, question: "Nghề dùng kiến thức Tin học?", options: ["Lập trình viên", "Giáo viên Tin", "Thiết kế đồ họa", "Cả 3"], correct: 3 },
+                    { id: 11, question: "Biểu thức nào có giá trị là True?", options: ["10 + 9 <= 11", "25 - 3 < 12", "2 * 10 < 31", "14 - 5 > 13"], correct: 2 },
+                    { id: 12, question: "Tin học giúp con người làm việc nào nhanh và chính xác hơn?", options: ["Viết tay", "Lưu trữ và xử lí thông tin", "Vẽ thủ công", "Ghi chép sổ"], correct: 1 },
+                    { id: 13, question: "Nghề nào sử dụng kiến thức Tin học?", options: ["Lập trình viên", "Giáo viên Tin", "Thiết kế đồ họa", "Cả A, B, C"], correct: 3 },
                     { id: 14, question: "Thông tin vào máy tính cần mã hóa thành:", options: ["Chữ viết", "Hình vẽ", "Dãy bit", "Âm thanh"], correct: 2 },
                     { id: 15, question: "Chia sẻ nhanh khoảnh khắc đẹp qua mạng nên dùng:", options: ["Văn bản", "Ảnh số", "Ảnh in", "Tranh vẽ"], correct: 1 },
                     { id: 16, question: "Để biết thông tin trên Internet có tin cậy không, nên:", options: ["Xem lượt thích", "Xem nguồn thông tin", "Tin ngay", "Chia sẻ ngay"], correct: 1 },
@@ -150,13 +193,13 @@
                     { id: 5, question: "Khi chương trình sai, cần kiểm tra lại các khối lệnh đã sử dụng.", correct: true },
                     { id: 6, question: "Có thể sửa lỗi bằng cách thay đổi thứ tự các khối lệnh.", correct: true },
                     { id: 7, question: "Gỡ lỗi là không cần thiết.", correct: false },
-                    { id: 8, question: "Thử chạy lại giúp phát hiện lỗi.", correct: true }
+                    { id: 8, question: "Thử chạy lại chương trình giúp phát hiện lỗi.", correct: true },
                 ],
                 fill: [
                     { id: 1, question: "Lệnh thực hiện lần lượt từ đầu đến cuối là cấu trúc ...", answer: "tuần tự" },
                     { id: 2, question: "Khối lệnh 'nếu ... thì ...' thuộc cấu trúc ...", answer: "rẽ nhánh" },
                     { id: 3, question: "Đi thẳng 10 bước 5 lần liên tiếp dùng cấu trúc ...", answer: "lặp" },
-                    { id: 4, question: "Cấu trúc điều khiển giúp chương trình hoạt động ...", answer: "linh hoạt" }
+                    { id: 4, question: "Cấu trúc điều khiển giúp chương trình hoạt động ...", answer: "linh hoạt" },
                 ],
                 essay: [
                     { id: 1, question: "Biến và Hằng trong chương trình dùng để làm gì?", hint: "Biến: Lưu trữ giá trị thay đổi. Hằng: Giá trị không đổi." },
@@ -237,7 +280,7 @@
                         <h2 className="text-xl md:text-2xl font-bold text-white">{title}</h2>
                     </div>
                     <p className="text-white/90 text-xs md:text-sm font-semibold bg-black/20 inline-block px-2 py-1 rounded mb-1">
-                        <Calendar size={12} className="inline mr-1"/> {timeInfo}
+                        <span className="flex items-center gap-1"><Calendar size={12} className="inline mr-1"/> {timeInfo}</span>
                     </p>
                     <p className="text-blue-100 text-xs md:text-sm">{subTitle}</p>
                     </div>
@@ -514,7 +557,7 @@
 
                     <div className="absolute top-4 right-4 flex gap-2 z-20">
                          {isOnline ? <span className="bg-green-500/20 text-green-300 text-xs px-2 py-1 rounded border border-green-500/50 flex items-center gap-1"><Cloud size={12}/> Online</span> : <span className="bg-gray-500/20 text-gray-300 text-xs px-2 py-1 rounded border border-gray-500/50 flex items-center gap-1"><CloudOff size={12}/> Offline</span>}
-                         <button onClick={()=>setIsAdmin(true)} className="text-white/50 hover:text-white transition-colors"><Lock size={20}/></button>
+                         <button onClick={()=>setIsAdmin(true)} className="text-white/50 hover:text-white transition-colors"><Lock/></button>
                     </div>
 
                     <div className="relative z-10 bg-white/10 backdrop-blur-md p-6 md:p-8 rounded-3xl shadow-2xl w-full max-w-md border border-white/20 animate-in slide-in-from-bottom-8 duration-500">
@@ -608,17 +651,17 @@
             };
 
             const askAI = async (type) => {
-                setLoadingAI(true);
-                const p = type==='hint' ? `Gợi ý ngắn gọn cho câu hỏi: "${q.question}"` : `Chấm điểm câu trả lời: "${input}" cho câu hỏi "${q.question}". Gợi ý: "${q.hint}"`;
-                const res = await callGeminiAPI(p);
-                setAiRes(res);
-                setLoadingAI(false);
+                // setLoadingAI(true);
+                // const p = type==='hint' ? `Gợi ý ngắn gọn cho câu hỏi: "${q.question}"` : `Chấm điểm câu trả lời: "${input}" cho câu hỏi "${q.question}". Gợi ý: "${q.hint}"`;
+                // const res = await callGeminiAPI(p);
+                // setAiRes(res);
+                // setLoadingAI(false);
             };
 
             return (
                 <div className="min-h-screen bg-slate-100 flex flex-col items-center justify-center p-4">
                     <div className="w-full max-w-2xl bg-white p-6 rounded-3xl shadow-xl relative overflow-hidden min-h-[400px] flex flex-col">
-                        <div className="flex justify-between mb-4 text-slate-400"><button onClick={onBack}><X size={24}/></button><span className="font-bold text-indigo-600">{idx+1}/{questions.length}</span></div>
+                        <div className="flex justify-between mb-4 text-slate-400"><button onClick={onBack}><X/></button><span className="font-bold text-indigo-600">{idx+1}/{questions.length}</span></div>
                         
                         {status && (
                             <div className={`absolute inset-0 z-20 flex flex-col items-center justify-center text-white animate-in ${status==='correct'?'bg-green-500/95':'bg-red-500/95'}`}>
@@ -646,10 +689,8 @@
                                 {showHint && <div className="bg-yellow-50 p-3 rounded text-yellow-800 text-sm">Gợi ý: {q.hint}</div>}
                                 <div className="flex gap-2">
                                     {mode==='essay' && <button onClick={()=>setShowHint(true)} className="px-4 py-3 bg-white border font-bold rounded-xl text-slate-600 text-sm">Gợi ý</button>}
-                                    {mode==='essay' && <button onClick={()=>askAI('grade')} className="flex-1 bg-purple-600 text-white font-bold rounded-xl flex justify-center items-center gap-2 text-sm">{loadingAI?<Loader2 className="animate-spin" size={16}/>:<Sparkles size={16}/>} Chấm điểm AI</button>}
                                     <button onClick={mode==='fill'?handleAns:()=>{if(idx<questions.length-1)setIdx(idx+1);else onFinish({score, total:questions.length*10})}} className="flex-1 bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 shadow-lg text-sm">{mode==='fill'?'Kiểm tra':'Tiếp theo'}</button>
                                 </div>
-                                {aiRes && <div className="mt-4 p-3 bg-purple-50 text-purple-800 rounded border border-purple-200 text-sm text-left">{aiRes}</div>}
                             </div>}
                         </div>
                     </div>
@@ -777,7 +818,7 @@
             const handleLogin = (u) => { 
                 const now = new Date();
                 const userData = { ...u, loginTime: now.toLocaleString('vi-VN'), dateKey: now.toLocaleDateString('vi-VN') };
-                setUser(userData); saveStudent(userData); setScreen('dashboard'); 
+                saveStudent(userData); setScreen('dashboard'); 
             };
 
             return (
