@@ -30,7 +30,8 @@
         ::-webkit-scrollbar-track { background: #f1f5f9; }
         ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #64748b; }
-        /* Không dùng glass-panel trắng nữa mà dùng style trực tiếp trong component */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased selection:bg-yellow-400 selection:text-indigo-900">
@@ -209,6 +210,15 @@
             const [isDeleting, setIsDeleting] = useState(false);
             const fileInputRef = useRef(null);
 
+            const handleDownloadTemplate = () => {
+                if (!window.XLSX) return notify("Lỗi thư viện Excel. Vui lòng tải lại trang.", "error");
+                const rows = [["Lớp","Loại","Câu hỏi","A","B","C","D","Đáp án"],[8,"TN","Tin học ứng dụng lĩnh vực nào?","Y tế","Giáo dục","Quốc phòng","Cả 3","D"]];
+                const wb = window.XLSX.utils.book_new();
+                const ws = window.XLSX.utils.aoa_to_sheet(rows);
+                window.XLSX.utils.book_append_sheet(wb, ws, "Mau");
+                window.XLSX.writeFile(wb, "Mau_Cau_Hoi.xlsx");
+            };
+
             const handleFileChange = (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
@@ -230,6 +240,8 @@
             };
 
             const filteredList = studentList.filter(s => filterGrade === 'ALL' || s.grade?.toString() === filterGrade);
+            const pythonStudents = studentList.filter(s => s.pythonReg);
+            const scratchStudents = studentList.filter(s => s.scratchReg);
 
             return (
                 <div className="min-h-screen bg-slate-100 p-2 md:p-6 animate-in">
@@ -245,30 +257,36 @@
                         
                         <div className="p-4 md:p-6">
                             <div className="grid md:grid-cols-2 gap-4 mb-6">
+                                <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                                    <h3 className="font-bold text-blue-900 flex gap-2 mb-2"><Database size={18}/> Quản lý Câu hỏi (Excel)</h3>
+                                    <div className="flex gap-2">
+                                        <button onClick={handleDownloadTemplate} className="flex-1 px-3 py-2 bg-white border rounded shadow-sm text-sm font-bold flex justify-center items-center gap-1 hover:bg-slate-50 transition-colors"><Download size={14}/> Mẫu</button>
+                                        <button onClick={() => fileInputRef.current.click()} className="flex-1 px-3 py-2 bg-blue-600 text-white rounded shadow-sm text-sm font-bold flex justify-center items-center gap-1 hover:bg-blue-700 transition-colors"><Upload size={14}/> Upload</button>
+                                        <input type="file" ref={fileInputRef} className="hidden" accept=".xlsx" onChange={handleFileChange}/>
+                                    </div>
+                                    <p className="text-xs text-blue-700 mt-2">* Tải file mẫu, điền câu hỏi và upload lại.</p>
+                                </div>
                                 <div className="p-4 bg-green-50 border border-green-200 rounded-xl">
                                     <h3 className="font-bold text-green-900 mb-2">Cấu trúc Lớp học (Cloud)</h3>
                                     <div className="flex gap-2">
-                                        <select value={newClassInput.grade} onChange={e=>setNewClassInput({...newClassInput, grade: Number(e.target.value)})} className="border rounded px-2 py-1 text-sm"><option value={6}>K6</option><option value={7}>K7</option><option value={8}>K8</option><option value={9}>K9</option></select>
+                                        <select value={newClassInput.grade} onChange={e=>setNewClassInput({...newClassInput, grade: Number(e.target.value)})} className="border rounded px-2 py-1 text-sm bg-white"><option value={6}>K6</option><option value={7}>K7</option><option value={8}>K8</option><option value={9}>K9</option></select>
                                         <input type="text" placeholder="Tên lớp (VD: 8A1)" value={newClassInput.name} onChange={e=>setNewClassInput({...newClassInput, name: e.target.value})} className="flex-1 border rounded px-2 py-1 text-sm"/>
                                         <button onClick={()=>{onUpdateClassStructure(newClassInput.grade, newClassInput.name); setNewClassInput({...newClassInput, name: ""})}} className="bg-green-600 text-white px-3 py-1 rounded text-sm font-bold">Thêm</button>
                                     </div>
                                     <div className="mt-2 text-xs text-slate-500">Các lớp hiện có: {Object.values(classStructure).flat().length} lớp</div>
                                 </div>
-                                <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl flex flex-col justify-center items-center">
-                                    <h3 className="font-bold text-blue-900 mb-2 flex gap-2"><Cloud size={18}/> Dữ liệu Realtime</h3>
-                                    <p className="text-sm text-blue-700 text-center">Dữ liệu đang được đồng bộ hóa trực tiếp với Firebase.</p>
-                                </div>
                             </div>
 
-                            <div className="flex gap-2 mb-4 border-b pb-2">
-                                <button onClick={()=>setActiveTab('history')} className={`px-3 py-2 font-bold text-sm rounded ${activeTab==='history'?'bg-indigo-100 text-indigo-700':'text-slate-500'}`}>Lịch sử làm bài</button>
-                                <button onClick={()=>setActiveTab('reg')} className={`px-3 py-2 font-bold text-sm rounded ${activeTab==='reg'?'bg-yellow-100 text-yellow-700':'text-slate-500'}`}>Đăng ký khóa học</button>
+                            <div className="flex gap-2 mb-4 border-b pb-2 overflow-x-auto no-scrollbar">
+                                <button onClick={() => setActiveTab('history')} className={`whitespace-nowrap px-3 py-2 font-bold text-sm rounded flex gap-2 items-center transition-colors ${activeTab==='history'?'bg-indigo-100 text-indigo-700':'text-slate-500 hover:bg-slate-100'}`}><List size={16}/> Lịch sử</button>
+                                <button onClick={() => setActiveTab('python')} className={`whitespace-nowrap px-3 py-2 font-bold text-sm rounded flex gap-2 items-center transition-colors ${activeTab==='python'?'bg-yellow-100 text-yellow-700':'text-slate-500 hover:bg-slate-100'}`}><Code size={16}/> Python ({pythonStudents.length})</button>
+                                <button onClick={() => setActiveTab('scratch')} className={`whitespace-nowrap px-3 py-2 font-bold text-sm rounded flex gap-2 items-center transition-colors ${activeTab==='scratch'?'bg-orange-100 text-orange-700':'text-slate-500 hover:bg-slate-100'}`}><Gamepad2 size={16}/> Scratch ({scratchStudents.length})</button>
                             </div>
 
                             {activeTab === 'history' && (
-                                <div>
+                                <div className="animate-in">
                                     <div className="flex flex-wrap gap-2 mb-4 items-center">
-                                        <select onChange={e=>setFilterGrade(e.target.value)} className="border p-2 rounded text-sm"><option value="ALL">Tất cả Khối</option><option value="6">K6</option><option value="7">K7</option><option value="8">K8</option><option value="9">K9</option></select>
+                                        <select onChange={e=>setFilterGrade(e.target.value)} className="border p-2 rounded text-sm bg-white"><option value="ALL">Tất cả Khối</option><option value="6">K6</option><option value="7">K7</option><option value="8">K8</option><option value="9">K9</option></select>
                                         <button onClick={handleDelete} disabled={isDeleting} className={`ml-auto text-red-600 border border-red-200 bg-red-50 px-3 py-2 rounded hover:bg-red-100 text-sm flex items-center gap-1 font-bold ${isDeleting ? 'opacity-50' : ''}`}>
                                             {isDeleting ? <Loader2 size={16} className="animate-spin"/> : <Trash2 size={16}/>} Xóa TOÀN BỘ lịch sử
                                         </button>
@@ -278,7 +296,7 @@
                                             <thead className="bg-slate-50 border-b sticky top-0"><tr><th className="p-3">Học sinh</th><th className="p-3">Lớp</th><th className="p-3">Thời gian</th><th className="p-3 text-right">Điểm</th></tr></thead>
                                             <tbody>
                                                 {filteredList.map((s) => (
-                                                    <tr key={s.id} className="border-b hover:bg-slate-50 text-sm">
+                                                    <tr key={s.id} className="border-b hover:bg-slate-50 text-sm transition-colors">
                                                         <td className="p-3 font-bold text-indigo-900">{s.name}</td>
                                                         <td className="p-3"><span className="bg-blue-100 px-2 py-1 rounded text-xs text-blue-800 font-bold">{s.className}</span></td>
                                                         <td className="p-3 text-slate-500">{s.loginTime}</td>
@@ -291,23 +309,26 @@
                                     </div>
                                 </div>
                             )}
-                             {activeTab === 'reg' && (
-                                <div className="overflow-x-auto border rounded-xl shadow-sm">
-                                    <table className="w-full text-left">
-                                        <thead className="bg-orange-50 border-b"><tr><th className="p-3">Học sinh</th><th className="p-3">Lớp</th><th className="p-3">Khóa</th><th className="p-3">SĐT</th></tr></thead>
+                             {(activeTab === 'python' || activeTab === 'scratch') && (
+                                <div className="overflow-x-auto border rounded-xl shadow-sm animate-in">
+                                    <table className="w-full text-left min-w-[700px]">
+                                        <thead className={`border-b ${activeTab==='python'?'bg-yellow-50':'bg-orange-50'}`}>
+                                            <tr><th className="p-3">Họ Tên</th><th className="p-3">Lớp (Trường)</th><th className="p-3">Đăng ký</th><th className="p-3">SĐT</th><th className="p-3">Ngày ĐK</th></tr>
+                                        </thead>
                                         <tbody>
-                                            {studentList.filter(s=>s.pythonReg || s.scratchReg).map((s) => {
-                                                const reg = s.pythonReg || s.scratchReg;
-                                                const type = s.pythonReg ? 'Python' : 'Scratch';
+                                            {(activeTab==='python' ? pythonStudents : scratchStudents).map((s) => {
+                                                const reg = activeTab==='python' ? s.pythonReg : s.scratchReg;
                                                 return (
-                                                    <tr key={s.id} className="border-b text-sm">
+                                                    <tr key={s.id} className="border-b hover:bg-slate-50 text-sm transition-colors">
                                                         <td className="p-3 font-bold">{reg.studentName}</td>
                                                         <td className="p-3">{s.className}</td>
-                                                        <td className="p-3"><span className="border px-2 py-1 rounded font-bold text-xs">{type} - Lớp {reg.regGrade}</span></td>
-                                                        <td className="p-3 font-mono text-indigo-600">{reg.phone}</td>
+                                                        <td className="p-3"><span className="font-bold border px-2 py-1 rounded bg-white shadow-sm">Lớp {reg.regGrade}</span></td>
+                                                        <td className="p-3 font-mono text-indigo-600 font-semibold">{reg.phone}</td>
+                                                        <td className="p-3 text-slate-500">{s.dateKey}</td>
                                                     </tr>
-                                                )
+                                                );
                                             })}
+                                            {(activeTab==='python' ? pythonStudents : scratchStudents).length === 0 && <tr><td colSpan="5" className="p-8 text-center text-slate-400">Chưa có đăng ký nào.</td></tr>}
                                         </tbody>
                                     </table>
                                 </div>
