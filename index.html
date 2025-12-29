@@ -1,838 +1,929 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đam Mê Tin Học - Online Realtime</title>
+    <title>WINTIPS - Professional Football Analysis</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script type="importmap">
-    {
-      "imports": {
-        "react": "https://esm.sh/react@18.2.0",
-        "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
-        "lucide-react": "https://esm.sh/lucide-react@0.263.1",
-        "firebase/app": "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js",
-        "firebase/firestore": "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js",
-        "firebase/auth": "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"
-      }
-    }
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;700&family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    
+    <!-- PAYPAL SDK (LIVE) -->
+    <script src="https://www.paypal.com/sdk/js?client-id=AVtv7tmn8FWdHq6vhuTHr3vacon_0T1zHBwcka3aBSFCp9pyWZDuPvi5T_Vl126I0VDa4GNupWCQnOak&currency=USD&components=buttons"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 
+                            black: '#0a0a0a',
+                            dark: '#1a1a1a',
+                            gold: '#d4af37',
+                            goldLight: '#f3e5ab',
+                            accent: '#c92a2a',
+                            binance: '#F0B90B' 
+                        }
+                    },
+                    fontFamily: { 
+                        sans: ['Montserrat', 'sans-serif'],
+                        display: ['Oswald', 'sans-serif']
+                    },
+                    animation: {
+                         'pulse-slow': 'pulse 3s infinite',
+                         'float': 'float 5s ease-in-out infinite',
+                         'glow': 'glow 2s ease-in-out infinite alternate',
+                         'scanning': 'scanning 2s linear infinite',
+                         'shimmer': 'shimmer 2s linear infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        glow: {
+                            'from': { boxShadow: '0 0 5px #d4af37' },
+                            'to': { boxShadow: '0 0 20px #d4af37, 0 0 10px #f3e5ab' }
+                        },
+                        scanning: {
+                            '0%': { transform: 'translateX(-100%)' },
+                            '100%': { transform: 'translateX(200%)' }
+                        },
+                        shimmer: {
+                            '0%': { backgroundPosition: '-1000px 0' },
+                            '100%': { backgroundPosition: '1000px 0' }
+                        }
+                    }
+                }
+            }
+        }
     </script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Be Vietnam Pro', sans-serif; }
-        .animate-in { animation: fadeIn 0.4s ease-out; }
-        .animate-slide-up { animation: slideUp 0.3s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f5f9; }
-        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .hidden-panel { display: none; }
+        body { background-color: #050505; color: #e5e5e5; overflow-x: hidden; font-family: 'Montserrat', sans-serif; }
+
+        /* --- LOGO --- */
+        .wintips-logo {
+            font-family: 'Oswald', sans-serif;
+            background: linear-gradient(to right, #d4af37, #f3e5ab, #d4af37);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        /* --- CẦU THỦ --- */
+        .player-img {
+            position: absolute; top: 50%; transform: translateY(-50%); 
+            z-index: 0; 
+            height: auto; width: 450px; opacity: 0.4; pointer-events: none; 
+            filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.2)); transition: all 0.5s ease;
+        }
+        .player-left { left: -100px; animation: float 6s ease-in-out infinite; }
+        .player-right { right: -100px; animation: float 5s ease-in-out infinite reverse; }
+        @media (max-width: 1400px) { .player-img { opacity: 0.15; width: 300px; } .player-left { left: -80px; } .player-right { right: -80px; } }
+        @media (max-width: 768px) { .player-img { display: none; } }
+
+        /* --- BẢNG & CARD --- */
+        .record-container {
+            position: relative; z-index: 20; background: rgba(20, 20, 20, 0.9); backdrop-filter: blur(15px); border-radius: 16px; box-shadow: 0 0 40px rgba(0,0,0,0.8); border: 1px solid rgba(212, 175, 55, 0.3); margin-bottom: 2rem;
+        }
+        .record-table { border-collapse: separate; border-spacing: 0; width: 100%; border-radius: 8px; overflow: hidden; }
+        .record-table th { background: linear-gradient(to bottom, #1a1a1a, #000); color: #d4af37; font-weight: 700; padding: 18px 10px; text-transform: uppercase; font-size: 0.9rem; font-family: 'Oswald', sans-serif; letter-spacing: 1px; border-bottom: 2px solid #d4af37; }
+        .record-table td { background-color: rgba(30,30,30,0.8); color: #fff; padding: 16px 10px; border-bottom: 1px solid #333; font-weight: 500; font-size: 0.9rem; vertical-align: middle; }
+        .record-table tr:hover td { background-color: rgba(50,50,50,0.9); }
+
+        /* --- FEATURED TIP CARD --- */
+        .featured-card {
+            background: linear-gradient(135deg, rgba(10,10,10,0.95) 0%, rgba(30,30,30,0.95) 100%);
+            border: 2px solid #d4af37;
+            border-radius: 20px;
+            box-shadow: 0 0 50px rgba(212, 175, 55, 0.4);
+            position: relative;
+            overflow: hidden;
+            z-index: 30;
+            backdrop-filter: blur(10px);
+            max-width: 800px;
+            margin: 30px auto 0;
+        }
+        .featured-card::before {
+            content: ""; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.15), transparent);
+            animation: shimmer 3s infinite;
+        }
+        .lock-overlay {
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(10px);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            border-radius: 12px; border: 1px dashed #555; padding: 20px;
+        }
+
+        /* --- BADGES --- */
+        .badge { display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; min-width: 80px; letter-spacing: 0.5px; transition: all 0.3s ease; }
+        
+        /* WIN: Green Pulse */
+        .badge-win { background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: white; border: 1px solid #34d399; text-shadow: 0 1px 2px rgba(0,0,0,0.3); animation: winPulsePro 2s infinite; }
+        @keyframes winPulsePro { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); transform: scale(1); } 70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); transform: scale(1.05); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); transform: scale(1); } }
+        
+        /* DRAW: Blue Pulse (NEW) */
+        .badge-draw { background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%); color: white; border: 1px solid #60a5fa; text-shadow: 0 1px 2px rgba(0,0,0,0.3); animation: drawPulsePro 2s infinite; }
+        @keyframes drawPulsePro { 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); transform: scale(1); } 70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); transform: scale(1.05); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); transform: scale(1); } }
+
+        .badge-lose { background: rgba(220, 38, 38, 0.2); color: #f87171; border: 1px solid #ef4444; }
+        .badge-pending { color: #fbbf24; animation: waitingBreath 3s infinite ease-in-out; }
+        @keyframes waitingBreath { 0% { opacity:0.6 } 50% { opacity:1 } 100% { opacity:0.6 } }
+
+        /* --- ANALYSIS BOX --- */
+        .analysis-box { 
+            background: linear-gradient(to right, rgba(20, 20, 20, 0.8), rgba(30, 30, 30, 0.8)); 
+            border-left: 4px solid #d4af37; 
+            padding: 15px; 
+            margin-top: 15px; 
+            font-size: 0.95rem; 
+            color: #e5e5e5; 
+            font-style: normal;
+            border-radius: 0 8px 8px 0;
+            line-height: 1.5;
+            display: block; 
+        }
+
+        /* --- WAITING & LOADING --- */
+        .next-day-loader { text-align: center; padding: 40px 20px; background: linear-gradient(to bottom, rgba(20,20,20,0.8), rgba(0,0,0,0.9)); border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 12px; margin-top: 20px; display: none; }
+        .loader-radar { width: 60px; height: 60px; border: 2px solid #d4af37; border-radius: 50%; position: relative; margin: 0 auto 20px; box-shadow: 0 0 15px rgba(212, 175, 55, 0.3); }
+        .loader-radar::after { content: ''; position: absolute; top: 50%; left: 50%; width: 50%; height: 50%; background: linear-gradient(45deg, transparent 50%, rgba(212, 175, 55, 0.8) 100%); border-radius: 100% 0 0 0; transform-origin: 0 0; animation: radarSpin 2s infinite linear; }
+        @keyframes radarSpin { 100% { transform: rotate(360deg); } }
+        .waiting-card { background: rgba(30, 30, 30, 0.6); border: 1px dashed #d4af37; padding: 40px; text-align: center; border-radius: 12px; margin-top: 20px; }
+        .scanning-line { width: 100%; height: 2px; background: linear-gradient(to right, transparent, #d4af37, transparent); animation: scanning 1.5s linear infinite; margin-top: 15px; }
+
+        /* --- CHATBOT --- */
+        .chatbot-btn {
+            position: fixed; bottom: 30px; right: 30px; 
+            background: linear-gradient(135deg, #d4af37, #b48e18);
+            width: 60px; height: 60px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
+            cursor: pointer; z-index: 100; transition: transform 0.3s;
+        }
+        .chatbot-btn:hover { transform: scale(1.1); }
+        .chatbot-window {
+            position: fixed; bottom: 100px; right: 30px;
+            width: 350px; height: 500px;
+            background: #1a1a1a; border: 1px solid #d4af37;
+            border-radius: 15px; z-index: 100;
+            display: none; flex-direction: column;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+            overflow: hidden;
+        }
+        .chat-header { background: #d4af37; color: black; padding: 15px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        .chat-body { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .chat-message { padding: 10px; border-radius: 8px; max-width: 80%; font-size: 0.9rem; }
+        .chat-user { background: #333; color: white; align-self: flex-end; }
+        .chat-ai { background: #f3f4f6; color: black; align-self: flex-start; }
+        .chat-input-area { padding: 10px; background: #000; display: flex; gap: 5px; border-top: 1px solid #333; }
+        .chat-input { flex: 1; background: #222; border: 1px solid #444; color: white; padding: 8px; border-radius: 5px; outline: none; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 antialiased selection:bg-yellow-400 selection:text-indigo-900">
-    <div id="root"></div>
+<body class="relative min-h-screen text-gray-200">
 
-    <script type="text/babel" data-type="module">
-        import React, { useState, useEffect, useRef } from 'react';
-        import { createRoot } from 'react-dom/client';
-        import { 
-            BookOpen, CheckCircle, XCircle, Trophy, User, Smartphone, Play, 
-            RefreshCcw, Star, Edit3, HelpCircle, Brain, Upload, Download, 
-            Sparkles, Loader2, Users, Lock, List, Trash2, LogOut, Calendar, 
-            Database, Terminal, Code, Monitor, Phone, Key, Gamepad2, Plus, 
-            X, AlertCircle, Info, Cloud, Settings
-        } from 'lucide-react';
+    <!-- USER VIEW -->
+    <div id="user-view" class="relative z-10">
+        <!-- Header -->
+        <header class="bg-black/90 backdrop-blur-md sticky top-0 z-50 border-b border-gray-800 shadow-xl">
+            <div class="container mx-auto px-4 py-4 flex justify-between items-center max-w-7xl">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 flex items-center justify-center border-2 border-brand-gold rounded-full">
+                        <i class="fa-solid fa-crown text-brand-gold text-xl"></i>
+                    </div>
+                    <span class="text-3xl font-bold wintips-logo">WINTIPS</span>
+                </div>
+                <nav class="hidden md:flex gap-8 font-bold uppercase text-xs tracking-widest">
+                    <a href="#" class="text-gray-400 hover:text-brand-gold transition">Home</a>
+                    <a href="#featured-tip" class="text-brand-gold animate-pulse font-bold">Super Tip</a>
+                    <a href="#vip-records" class="text-gray-400 hover:text-white transition">VIP Records</a>
+                    <a href="#free-tips" class="text-gray-400 hover:text-brand-gold transition">Free Tips</a>
+                    <a href="#pricing" class="bg-brand-gold text-black px-4 py-1 rounded hover:bg-yellow-400 transition">Get VIP</a>
+                </nav>
+                <button onclick="window.openAdminLogin()" class="text-[10px] text-gray-600 hover:text-gray-400 border border-gray-800 px-3 py-1 rounded transition">LOGIN</button>
+            </div>
+        </header>
+
+        <!-- Hero & Featured Tip Section -->
+        <section class="relative py-20 text-center overflow-hidden">
+            <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center opacity-10"></div>
+            
+            <div class="relative z-10 container mx-auto px-4">
+                <h1 class="text-5xl md:text-7xl font-black mb-4 uppercase tracking-tighter text-white font-display">Professional <span class="wintips-logo">Betting Tips</span></h1>
+                <p class="text-brand-gold text-lg md:text-xl tracking-widest uppercase font-light mb-8">High Accuracy • Daily Analysis • Premium Support</p>
+                
+                <!-- SUPER TIP CARD -->
+                <div id="featured-tip" class="featured-card p-8 text-center hidden">
+                    <div class="absolute top-4 left-4 bg-brand-accent text-white text-xs font-bold px-3 py-1 rounded uppercase tracking-wider">High Confidence</div>
+                    <div class="absolute top-4 right-4 text-brand-gold text-sm font-mono" id="featured-date">Today</div>
+                    
+                    <h2 class="text-3xl font-display font-bold text-white mb-2 tracking-wide flex items-center justify-center">
+                        <i class="fa-solid fa-star text-brand-gold mr-3 animate-spin-slow"></i> 
+                        SUPER TIP OF THE DAY 
+                        <i class="fa-solid fa-star text-brand-gold ml-3 animate-spin-slow"></i>
+                    </h2>
+                    <p class="text-gray-400 text-sm uppercase tracking-widest mb-6" id="featured-league">PREMIER LEAGUE</p>
+                    
+                    <div class="flex justify-between items-center bg-gray-900/80 rounded-xl p-6 border border-gray-700 mb-6">
+                        <div class="w-1/3 text-right">
+                            <h3 class="text-xl font-bold text-white" id="featured-home">HOME TEAM</h3>
+                        </div>
+                        <div class="w-1/3 text-center">
+                            <span class="text-2xl font-display text-brand-gold font-bold">VS</span>
+                            <div class="text-xs text-gray-500 mt-1" id="featured-time">20:00</div>
+                        </div>
+                        <div class="w-1/3 text-left">
+                            <h3 class="text-xl font-bold text-white" id="featured-away">AWAY TEAM</h3>
+                        </div>
+                    </div>
+
+                    <div class="lock-overlay">
+                        <i class="fa-solid fa-lock text-4xl text-brand-gold mb-3"></i>
+                        <h3 class="text-xl font-bold text-white">PREMIUM PICK HIDDEN</h3>
+                        <p class="text-gray-400 text-sm mb-4">Odds: <span id="featured-odd" class="text-white font-bold">1.95</span> | Confidence: <span class="text-brand-gold">⭐⭐⭐⭐⭐</span></p>
+                        <button onclick="window.openPaymentModal('1 DAY VIP (Super Tip)', '20')" class="bg-brand-gold text-black font-bold px-8 py-3 rounded-full hover:bg-yellow-400 transition transform hover:scale-105 shadow-lg shadow-yellow-500/20 text-lg">
+                            UNLOCK NOW - $20
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- MAIN CONTENT -->
+        <section class="py-12 relative overflow-hidden">
+            <div class="container mx-auto px-2 md:px-4 max-w-6xl relative"> 
+                
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Lionel_Messi_20180626.jpg/413px-Lionel_Messi_20180626.jpg" 
+                     class="player-img player-left hidden lg:block rounded-full border-2 border-brand-gold" alt="Messi">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Cristiano_Ronaldo_2018.jpg/400px-Cristiano_Ronaldo_2018.jpg" 
+                     class="player-img player-right hidden lg:block rounded-full border-2 border-white" alt="Ronaldo">
+                
+                <!-- 1. VIP RECORDS -->
+                <div id="vip-records" class="max-w-4xl mx-auto record-container p-6 relative mt-10"> 
+                    <div class="text-center mb-8">
+                        <h2 class="text-3xl font-display font-bold text-white uppercase">VIP <span class="text-brand-gold">Performance</span></h2>
+                        <div class="h-1 w-20 bg-brand-gold mx-auto mt-2"></div>
+                    </div>
+                    <div id="vip-status-msg" class="mb-6 bg-gray-900/50 p-4 rounded border border-gray-800 text-center hidden">
+                        <h3 class="font-bold text-brand-gold uppercase text-sm mb-2"><i class="fa-solid fa-lock"></i> VIP Tips for Tomorrow</h3>
+                        <p class="text-gray-400 text-xs italic">Tips have been sent to premium members via email.</p>
+                    </div>
+                    <div class="overflow-x-auto rounded-lg">
+                        <table class="record-table">
+                            <thead><tr><th class="w-[15%] text-center">Date</th><th class="w-[40%] text-center">Match</th><th class="w-[20%] text-center">Pick</th><th class="w-[10%] text-center">Odd</th><th class="w-[10%] text-center">FT</th><th class="w-[5%] text-center">Res</th></tr></thead>
+                            <tbody id="list-vip"><tr><td colspan="6" class="p-8 text-center text-gray-500">Connecting to database...</td></tr></tbody>
+                        </table>
+                    </div>
+                    <div id="next-day-loader" class="next-day-loader">
+                        <div class="loader-radar"></div>
+                        <h3 class="text-xl font-bold text-brand-gold uppercase tracking-wider">Preparing Next Day's Tips</h3>
+                        <p class="text-gray-400 text-sm mt-2 mb-4">Our experts are analyzing upcoming matches.</p>
+                        <div class="inline-block bg-brand-dark px-4 py-2 rounded-full border border-brand-gold/30">
+                            <i class="fa-solid fa-envelope text-brand-gold mr-2"></i>
+                            <span class="text-gray-300 text-xs font-bold">Tips will be sent via Email to VIP Members</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. FREE TIPS -->
+                <div id="free-tips" class="max-w-4xl mx-auto record-container p-6 relative mt-12 border-t-2 border-brand-gold"> 
+                    <div class="flex justify-between items-end mb-6 border-b border-gray-700 pb-4">
+                        <div>
+                            <h2 class="text-3xl font-display font-bold text-white uppercase"><i class="fa-solid fa-gift text-brand-gold mr-2"></i> Free Tips & Analysis</h2>
+                            <p class="text-xs text-gray-400 mt-1">Daily expert opinions and free picks for community</p>
+                        </div>
+                        <div class="text-right">
+                            <span id="daily-status-display" class="text-xs bg-green-900 text-green-300 px-3 py-1 rounded border border-green-700 font-bold tracking-wide shadow-lg"><i class="fa-solid fa-clock"></i> Loading status...</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Today's Free Tip Cards -->
+                    <div id="list-free-container" class="space-y-4 mb-8"></div>
+                    
+                    <!-- Free Tips History (Last 7 Days) -->
+                    <div id="free-tips-history" class="mt-8 pt-6 border-t border-gray-700">
+                        <h3 class="text-lg font-bold text-brand-gold uppercase mb-4"><i class="fa-solid fa-history mr-2"></i> Free Tips History (Last 7 Days)</h3>
+                        <div class="overflow-x-auto rounded-lg">
+                             <table class="record-table">
+                                <thead><tr><th class="w-[15%] text-center">Date</th><th class="w-[40%] text-center">Match</th><th class="w-[20%] text-center">Pick</th><th class="w-[10%] text-center">FT</th><th class="w-[15%] text-center">Result</th></tr></thead>
+                                <tbody id="list-free-history"></tbody>
+                             </table>
+                        </div>
+                    </div>
+
+                    <!-- WAITING / LOADING STATE -->
+                    <div id="free-tips-loading" class="waiting-card hidden">
+                        <i class="fa-solid fa-satellite-dish text-4xl text-brand-gold mb-4 animate-pulse"></i>
+                        <h3 class="text-2xl font-display font-bold text-white uppercase mb-2">Experts Analyzing...</h3>
+                        <p class="text-gray-300 text-base italic mb-4">New free tips for tomorrow are being processed.</p>
+                        <div class="scanning-line mb-4"></div>
+                        <p class="text-xs text-gray-500 uppercase tracking-widest">Check back in a few hours.</p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- PRICING -->
+        <section id="pricing" class="py-20 bg-black relative z-10 border-t border-gray-800">
+            <div class="container mx-auto px-4 text-center max-w-6xl">
+                <h2 class="text-4xl font-display font-bold mb-2 text-white">JOIN <span class="wintips-logo">VIP CLUB</span></h2>
+                <p class="text-gray-500 mb-12 uppercase tracking-widest text-sm">Professional Investment Strategies</p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                    <!-- Daily -->
+                    <div class="bg-brand-dark p-8 rounded-xl border border-gray-700 hover:border-gray-500 transition duration-300 group">
+                        <h3 class="font-bold text-xl text-gray-300 group-hover:text-white">1 DAY VIP</h3>
+                        <div class="text-4xl font-display font-bold text-white my-6">$20</div>
+                        <ul class="text-left text-sm text-gray-400 space-y-3 mb-8 pl-4">
+                            <li><i class="fa-solid fa-check text-brand-gold mr-2"></i> 2-3 High Accuracy Tips</li>
+                            <li><i class="fa-solid fa-check text-brand-gold mr-2"></i> Email Delivery</li>
+                            <li><i class="fa-solid fa-check text-brand-gold mr-2"></i> Super Tip Included</li>
+                        </ul>
+                        <button onclick="window.openPaymentModal('1 DAY VIP', '20')" class="w-full bg-gray-700 text-white py-3 rounded font-bold hover:bg-gray-600 transition uppercase tracking-wider">Join Now</button>
+                    </div>
+                    <!-- Weekly -->
+                    <div class="bg-gradient-to-b from-gray-900 to-black p-8 rounded-xl border-2 border-brand-gold transform md:scale-110 relative shadow-[0_0_30px_rgba(212,175,55,0.15)]">
+                        <div class="absolute top-0 inset-x-0 -mt-3 flex justify-center">
+                            <span class="bg-brand-gold text-black text-xs font-bold px-4 py-1 rounded uppercase tracking-wider">Most Popular</span>
+                        </div>
+                        <h3 class="font-bold text-2xl text-brand-gold mt-2">1 WEEK VIP</h3>
+                        <div class="text-5xl font-display font-bold text-white my-6">$100</div>
+                        <ul class="text-left text-sm text-gray-300 space-y-3 mb-8 pl-4">
+                            <li><i class="fa-solid fa-star text-brand-gold mr-2"></i> <strong>7 Days</strong> Access</li>
+                            <li><i class="fa-solid fa-star text-brand-gold mr-2"></i> Money Management</li>
+                            <li><i class="fa-solid fa-star text-brand-gold mr-2"></i> High Odds Picks</li>
+                            <li><i class="fa-solid fa-star text-brand-gold mr-2"></i> Priority Email</li>
+                        </ul>
+                        <button onclick="window.openPaymentModal('1 WEEK VIP', '100')" class="w-full bg-brand-gold text-black py-4 rounded font-bold hover:bg-yellow-400 transition uppercase tracking-wider shadow-lg">Join Now</button>
+                    </div>
+                    <!-- Monthly -->
+                    <div class="bg-brand-dark p-8 rounded-xl border border-gray-700 hover:border-gray-500 transition duration-300 group">
+                        <h3 class="font-bold text-xl text-gray-300 group-hover:text-white">1 MONTH VIP</h3>
+                        <div class="text-4xl font-display font-bold text-white my-6">$300</div>
+                        <ul class="text-left text-sm text-gray-400 space-y-3 mb-8 pl-4">
+                            <li><i class="fa-solid fa-check text-brand-gold mr-2"></i> <strong>30 Days</strong> Access</li>
+                            <li><i class="fa-solid fa-check text-brand-gold mr-2"></i> Maximize Profits</li>
+                            <li><i class="fa-solid fa-check text-brand-gold mr-2"></i> 24/7 Support</li>
+                        </ul>
+                        <button onclick="window.openPaymentModal('1 MONTH VIP', '300')" class="w-full bg-gray-700 text-white py-3 rounded font-bold hover:bg-gray-600 transition uppercase tracking-wider">Join Now</button>
+                    </div>
+                </div>
+            </div>
+        </section>
         
-        // --- FIREBASE IMPORTS ---
-        import { initializeApp, getApps, getApp } from 'firebase/app';
-        import { 
-            getFirestore, collection, addDoc, onSnapshot, 
-            updateDoc, doc, setDoc, deleteDoc, query, orderBy, serverTimestamp, getDocs
-        } from 'firebase/firestore';
-        import { getAuth, signInAnonymously } from 'firebase/auth';
+        <footer class="bg-black text-gray-600 py-10 text-center text-xs relative z-10 border-t border-gray-900">
+            <div class="mb-4"><span class="wintips-logo text-xl">WINTIPS</span></div>
+            <p>© 2025 WINTIPS. All rights reserved.</p>
+        </footer>
+    </div>
 
-        // --- CẤU HÌNH FIREBASE CHÍNH THỨC CỦA BẠN ---
+    <!-- MODAL PAYMENT (FIXED) -->
+    <div id="payment-modal" class="fixed inset-0 z-[60] bg-black/90 hidden flex items-center justify-center backdrop-blur-md">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 relative">
+            <button onclick="window.closePaymentModal()" class="absolute top-4 right-4 text-gray-400 hover:text-red-500"><i class="fa-solid fa-times text-xl"></i></button>
+            <h3 class="text-xl font-bold text-center mb-2 text-gray-800">Secure Checkout</h3>
+            
+            <p id="modal-plan-name" class="text-center text-brand-gold font-bold mb-1 text-lg"></p>
+            <p id="modal-plan-price" class="text-center text-gray-500 font-bold mb-6 text-2xl"></p>
+            
+            <div class="flex gap-2 mb-4">
+                <button onclick="window.switchPaymentMethod('paypal')" id="btn-method-paypal" class="flex-1 py-2 rounded font-bold border border-blue-500 bg-blue-100 text-blue-700 transition"><i class="fa-brands fa-paypal"></i> PayPal</button>
+                <button onclick="window.switchPaymentMethod('binance')" id="btn-method-binance" class="flex-1 py-2 rounded font-bold border border-gray-300 bg-gray-50 text-gray-600 transition"><i class="fa-brands fa-btc"></i> Binance Pay</button>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Delivery Email</label>
+                <input type="email" id="buyer-email" placeholder="name@example.com" class="w-full border border-gray-300 p-3 rounded bg-gray-50 text-gray-900 focus:outline-none focus:border-brand-gold">
+            </div>
+            
+            <div id="paypal-button-container" class="mt-4"></div>
+
+            <div id="binance-payment-container" class="hidden mt-4 text-center">
+                <div class="bg-brand-binance/10 p-4 rounded border border-yellow-400 mb-4">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=maxbetsuper@gmail.com" alt="Binance QR" class="mx-auto border-2 border-white rounded mb-2">
+                    <p class="text-xs text-gray-500 font-bold mb-1">Scan to pay with Binance</p>
+                    <p class="text-sm font-bold text-gray-800 break-all bg-white p-2 rounded border">maxbetsuper@gmail.com</p>
+                </div>
+                <div class="text-left text-xs text-gray-600 mb-4">
+                    <ol class="list-decimal pl-4 space-y-1">
+                        <li>Open Binance App > Pay.</li>
+                        <li>Send <strong id="binance-amount" class="text-brand-gold"></strong> USDT to email above.</li>
+                        <li>Click "I Have Paid" below.</li>
+                    </ol>
+                </div>
+                <button onclick="window.handleBinancePayment()" class="w-full bg-[#F0B90B] text-black font-bold py-3 rounded hover:bg-yellow-400 transition shadow-lg">I HAVE PAID <i class="fa-solid fa-check ml-1"></i></button>
+            </div>
+            <p class="text-[10px] text-center text-gray-400 mt-4"><i class="fa-solid fa-lock"></i> SSL Secured Payment</p>
+        </div>
+    </div>
+
+    <!-- ADMIN PANEL -->
+    <div id="admin-panel" class="hidden-panel fixed inset-0 z-[70] bg-gray-100 overflow-y-auto text-gray-800">
+        <div class="bg-gray-900 text-white p-4 sticky top-0 flex justify-between items-center z-50 shadow-md">
+            <h2 class="font-bold flex items-center gap-2 text-brand-gold font-display text-xl"><i class="fa-solid fa-user-shield"></i> WINTIPS ADMIN</h2>
+            <div class="flex gap-2">
+                <button onclick="window.switchAdminTab('data')" id="tab-btn-data" class="bg-gray-700 px-4 py-2 rounded text-sm font-bold">Data</button>
+                <button onclick="window.switchAdminTab('report')" id="tab-btn-report" class="hover:bg-gray-700 px-4 py-2 rounded text-sm font-bold">Reports</button>
+                <button onclick="window.switchAdminTab('users')" id="tab-btn-users" class="hover:bg-gray-700 px-4 py-2 rounded text-sm font-bold">Users</button>
+            </div>
+            <button onclick="window.logoutAdmin()" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded text-sm font-bold">Log Out</button>
+        </div>
+
+        <div class="container mx-auto p-4 max-w-6xl">
+            <!-- TAB 1: DATA -->
+            <div id="tab-data">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold border-l-4 border-blue-500 pl-3">Match Management</h3>
+                    <div class="flex gap-2">
+                        <button onclick="window.exportTipsPDF()" class="bg-blue-600 text-white px-4 py-2 rounded font-bold shadow hover:bg-blue-700 text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-file-pdf"></i> Export PDF
+                        </button>
+                        <button onclick="window.resetAllData()" class="bg-white text-red-600 border border-red-200 px-4 py-2 rounded font-bold shadow hover:bg-red-50 text-sm">
+                            <i class="fa-solid fa-trash-can"></i> Reset DB
+                        </button>
+                    </div>
+                </div>
+
+                <!-- SUPER TIP UPDATE FORM -->
+                <div class="bg-yellow-50 p-6 rounded-xl border border-yellow-300 mb-6 shadow-md">
+                    <div class="flex justify-between items-center mb-4 border-b border-yellow-300 pb-2">
+                        <h3 class="font-bold text-yellow-800"><i class="fa-solid fa-star"></i> Update Super Tip</h3>
+                        <button onclick="window.clearFeaturedTip()" class="text-xs bg-red-100 text-red-600 px-2 py-1 rounded border border-red-200 hover:bg-red-200">Clear / Hide</button>
+                    </div>
+                    <form onsubmit="window.updateFeaturedTip(event)" class="space-y-3">
+                        <div class="grid grid-cols-2 gap-3">
+                            <input type="text" id="featDate" placeholder="Date (Today)" class="border p-2 rounded w-full text-sm" required>
+                            <input type="text" id="featLeague" placeholder="League (e.g. Premier League)" class="border p-2 rounded w-full text-sm" required>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <input type="text" id="featHome" placeholder="Home Team" class="border p-2 rounded w-full text-sm" required>
+                            <input type="text" id="featAway" placeholder="Away Team" class="border p-2 rounded w-full text-sm" required>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <input type="text" id="featTime" placeholder="Time (e.g. 20:00)" class="border p-2 rounded w-full text-sm" required>
+                            <input type="text" id="featOdd" placeholder="Odd (e.g. 1.95)" class="border p-2 rounded w-full text-sm" required>
+                        </div>
+                        <button type="submit" class="w-full bg-yellow-600 text-white font-bold p-2 rounded hover:bg-yellow-700 shadow">Update Featured Tip</button>
+                    </form>
+                </div>
+
+                <!-- UPDATE STATUS SECTION -->
+                <div class="bg-green-50 p-4 rounded border border-green-200 mb-6 flex items-center gap-4">
+                    <div class="flex-1">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">FREE TIPS STATUS (Hiển thị góc phải bảng Free):</label>
+                        <input type="text" id="statusInput" class="w-full border p-2 rounded text-sm font-bold text-green-700" placeholder="VD: Updated 10:00 AM | Kèo thơm hôm nay">
+                    </div>
+                    <button onclick="window.updateStatus()" class="bg-green-600 text-white px-4 py-2 rounded font-bold shadow hover:bg-green-700 text-sm h-fit self-end">Update Status</button>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <!-- ADD MATCH FORM -->
+                    <div class="bg-white p-6 rounded-xl shadow border-t-4 border-blue-500">
+                        <h3 class="font-bold border-b pb-2 mb-4 text-gray-700">1. Add New Match</h3>
+                        <form onsubmit="window.handleAddMatch(event)" class="space-y-3">
+                            <div class="mb-2">
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Type:</label>
+                                <select id="matchType" class="w-full border p-2 rounded bg-gray-50 font-bold text-gray-800">
+                                    <option value="VIP">👑 VIP TIP</option>
+                                    <option value="FREE">🎁 FREE TIP (Display Analysis)</option>
+                                </select>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <input type="text" id="matchDate" placeholder="Date (01.12.2025)" class="border p-2 rounded w-full" required>
+                                <input type="text" id="matchOdd" placeholder="Odd (1.95)" class="border p-2 rounded w-full" required>
+                            </div>
+                            <input type="text" id="matchTeams" placeholder="Match (Man Utd - Chelsea)" class="border p-2 rounded w-full" required>
+                            <input type="text" id="matchPick" placeholder="Pick (e.g. Man Utd -0.5, OVER 2.5)" class="border p-2 rounded w-full font-bold text-blue-700" required>
+                            <div class="mt-2">
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Analysis (Optional):</label>
+                                <textarea id="matchAnalysis" rows="3" class="w-full border p-2 rounded text-sm" placeholder="Write expert analysis..."></textarea>
+                            </div>
+                            <button type="submit" class="w-full bg-blue-600 text-white font-bold p-3 rounded hover:bg-blue-700 transition mt-2">Save Match</button>
+                        </form>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow border-t-4 border-green-500">
+                        <h3 class="font-bold border-b pb-2 mb-4 text-gray-700">2. Quick Upload (CSV)</h3>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs text-gray-500">Format: DATE,MATCH,PICK,ODD,TYPE,ANALYSIS</span>
+                            <button onclick="window.downloadSampleCSV()" class="text-xs bg-gray-200 px-2 py-1 rounded font-bold hover:bg-gray-300">Download Template</button>
+                        </div>
+                        <input type="file" id="csvFileInput" accept=".csv" class="w-full mb-3 p-2 border border-dashed rounded bg-gray-50">
+                        <button onclick="window.handleUploadCSV()" class="w-full bg-green-600 text-white font-bold p-3 rounded hover:bg-green-700 transition">Upload to Firebase</button>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl shadow">
+                    <h3 class="font-bold mb-4 text-gray-700">Active Matches List</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left"><thead class="bg-gray-100 text-gray-600"><tr><th class="p-3">Type</th><th class="p-3">Match</th><th class="p-3">Pick</th><th class="p-3">FT</th><th class="p-3 text-center">Set Status</th><th class="p-3 text-center">Action</th></tr></thead><tbody id="admin-match-list"></tbody></table>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="tab-report" class="hidden-panel">
+                <div class="bg-white p-6 rounded-xl shadow"><h3 class="text-xl font-bold mb-4 text-gray-800">Monthly Performance</h3><div id="stats-container"><p class="text-gray-500">Loading analysis...</p></div></div>
+            </div>
+            
+            <div id="tab-users" class="hidden-panel">
+                <div class="bg-white p-6 rounded-xl shadow">
+                    <h3 class="font-bold mb-4 text-gray-800">Customer List</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left border-collapse"><thead class="bg-gray-100 text-gray-700"><tr><th class="p-3 border-b">Email (Buyer)</th><th class="p-3 border-b">Plan</th><th class="p-3 border-b">Method</th><th class="p-3 border-b">Date</th></tr></thead><tbody id="admin-user-list"></tbody></table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOGIC -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, push, set, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // FIREBASE CONFIG
         const firebaseConfig = {
-          apiKey: "AIzaSyBJuLbMtx4GLsRcj_PO3TU0E4VBhOyJ-yQ",
-          authDomain: "dam-me-tin-hoc.firebaseapp.com",
-          databaseURL: "https://dam-me-tin-hoc-default-rtdb.firebaseio.com",
-          projectId: "dam-me-tin-hoc",
-          storageBucket: "dam-me-tin-hoc.firebasestorage.app",
-          messagingSenderId: "656467913362",
-          appId: "1:656467913362:web:2593c5b816b08f0f9ed44b"
+            apiKey: "AIzaSyANt9eF0V5SV5DoitedJsfBO3XTpedIwEk",
+            authDomain: "wintips-web.firebaseapp.com",
+            databaseURL: "https://wintips-web-default-rtdb.firebaseio.com",
+            projectId: "wintips-web",
+            storageBucket: "wintips-web.firebasestorage.app",
+            messagingSenderId: "101492724124",
+            appId: "1:101492724124:web:f87055614800022e01f859",
+            measurementId: "G-W6CXS7EWN9"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // HELPERS
+        const getMonthYear = (d) => { if(!d) return 'Unknown'; const p = d.includes('.') ? d.split('.') : d.split('/'); return (p.length === 3) ? `${p[1]}/${p[2]}` : 'Unknown'; };
+        const normalizeStr = (str) => str.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+
+        // --- GLOBAL FUNCTIONS ---
+        window.deleteMatch = (key) => {
+            Swal.fire({
+                title: 'Delete this match?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    remove(ref(db, 'matches/' + key))
+                        .then(() => { Swal.fire('Deleted!', 'Match deleted.', 'success'); })
+                        .catch((error) => { Swal.fire('Error!', error.message, 'error'); });
+                }
+            })
         };
 
-        // Biến toàn cục để lưu instance
-        let db = null;
-        let auth = null;
-
-        // --- CẤU HÌNH UI ---
-        const BACKGROUND_IMAGE = "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=2070&auto=format&fit=crop"; 
-        const DEFAULT_CLASS_STRUCTURE = {
-            6: ["6A1", "6A2", "6A3"], 7: ["7A1", "7A2", "7A3"],
-            8: ["8A1", "8A2", "8A3"], 9: ["9A4", "9A5", "9A6"]
-        };
-
-        // --- DỮ LIỆU CÂU HỎI ĐẦY ĐỦ (Đã khôi phục) ---
-        const DEFAULT_QUESTION_BANK = {
-            6: {
-                mcq: [{ id: 1, question: "Thông tin là gì?", options: ["Là những gì đem lại hiểu biết", "Là các con số", "Là văn bản", "Là hình ảnh"], correct: 0 }, { id: 2, question: "Đơn vị đo thông tin cơ bản?", options: ["Byte", "Bit", "KB", "GB"], correct: 1 }],
-                tf: [{ id: 1, question: "Máy tính cần hệ điều hành để hoạt động.", correct: true }],
-                fill: [{ id: 1, question: "Mạng máy tính gồm các thiết bị và ... kết nối.", answer: "đường truyền" }],
-                essay: [{ id: 1, question: "Tác hại của nghiện game?", hint: "Ảnh hưởng sức khỏe, học tập..." }]
-            },
-            7: {
-                mcq: [
-                    { id: 1, question: "Mạng xã hội thường được tổ chức dưới dạng nào?", options: ["Website", "Sách giấy", "Đĩa CD", "Tờ rơi"], correct: 0 },
-                    { id: 2, question: "Chia sẻ hình ảnh, video trên Facebook/Zalo là chức năng gì?", options: ["Lưu trữ", "Chia sẻ thông tin", "Chơi game", "Mua bán"], correct: 1 },
-                    { id: 3, question: "Cùng trao đổi ý kiến về một chủ đề gọi là:", options: ["Thảo luận", "Tranh cãi", "Kể chuyện", "Giải trí"], correct: 0 },
-                    { id: 4, question: "Không nên dùng MXH cho mục đích nào?", options: ["Giao lưu", "Học hỏi", "Chia sẻ ảnh đẹp", "Bình luận xấu"], correct: 3 },
-                    { id: 5, question: "Hành vi ứng xử văn minh trên mạng?", options: ["Xúc phạm", "Tin giả", "Tôn trọng", "Mạo danh"], correct: 2 },
-                    { id: 6, question: "Phần mềm bảng tính là:", options: ["Paint", "Excel", "Scratch", "PowerPoint"], correct: 1 },
-                    { id: 7, question: "Mỗi bảng tính gồm bao nhiêu trang tính?", options: ["1", "3", "10", "Nhiều"], correct: 3 },
-                    { id: 8, question: "Thay đổi dữ liệu ô tính, kết quả công thức sẽ:", options: ["Tự cập nhật", "Xóa", "Không đổi", "Nhập lại"], correct: 0 },
-                    { id: 9, question: "Giả mạo tài khoản người khác là:", options: ["Giao tiếp không hợp lệ", "An toàn", "Đúng mực", "Vui vẻ"], correct: 0 },
-                    { id: 10, question: "Nghiện Internet gây hậu quả gì cho học tập?", options: ["Hiệu quả", "Không sao", "Sa sút", "Điểm cao"], correct: 2 },
-                    { id: 11, question: "Nghiện Internet ảnh hưởng sức khỏe?", options: ["Khỏe hơn", "Không sao", "Mệt mỏi, đau mắt", "Tăng đề kháng"], correct: 2 },
-                    { id: 12, question: "Công thức trong bảng tính dùng để:", options: ["Nhập liệu", "Tính toán", "Vẽ hình", "Đổi màu"], correct: 1 }
-                ],
-                tf: [
-                    { id: 1, question: "Cần giao tiếp lịch sự trên mạng.", correct: true },
-                    { id: 2, question: "Thoải mái chia sẻ mọi thông tin cá nhân.", correct: false },
-                    { id: 3, question: "Không dùng lời lẽ xúc phạm trên mạng.", correct: true },
-                    { id: 4, question: "Tin tức trên MXH luôn chính xác.", correct: false },
-                    { id: 5, question: "Bảng tính cấu tạo từ hàng và cột.", correct: true },
-                    { id: 6, question: "Ô là giao của hàng và cột.", correct: true },
-                    { id: 7, question: "Bảng tính chỉ vẽ tranh, không tính toán.", correct: false },
-                    { id: 8, question: "Phần mềm bảng tính hỗ trợ tính toán tự động.", correct: true }
-                ],
-                fill: [
-                    { id: 1, question: "Tự ý đăng nhập tài khoản người khác là truy cập ...", answer: "không hợp lệ" },
-                    { id: 2, question: "Chia sẻ tin sai sự thật cần gỡ bài và ...", answer: "đính chính" },
-                    { id: 3, question: "Khối A1:B2 có bao nhiêu ô?", answer: "4" },
-                    { id: 4, question: "Copy =B1*C1 từ A1 xuống A2 thành ...", answer: "=B2*C2" }
-                ],
-                essay: [
-                    { id: 1, question: "Nam đăng ảnh xấu của Minh lên mạng. Đúng hay sai? Lời khuyên?", hint: "Sai. Nên xóa bài, xin lỗi và tôn trọng bạn bè." },
-                    { id: 2, question: "Phần mềm bảng tính dùng để làm gì?", hint: "Lưu, trình bày bảng, tính toán, vẽ biểu đồ." },
-                    { id: 3, question: "Ý nghĩa công thức =A1+B1? Nếu A1=5, B1=3?", hint: "Tính tổng. Kết quả là 8." }
-                ]
-            },
-            8: {
-                mcq: [
-                    { id: 1, question: "Tin học ứng dụng trong lĩnh vực nào?", options: ["Y tế", "Giáo dục", "Quốc phòng", "Cả A, B, C"], correct: 3 },
-                    { id: 2, question: "Nghề nghiệp thuộc lĩnh vực tin học?", options: ["Bán hàng", "Lập trình viên", "Vlogger", "NV Văn phòng"], correct: 1 },
-                    { id: 3, question: "Tỉ lệ nam nữ trong ngành tin học?", options: ["Nữ < Nam", "Nam < Nữ", "Bằng nhau", "Không rõ"], correct: 0 },
-                    { id: 4, question: "Hậu quả bất bình đẳng giới trong tin học?", options: ["Ít cơ hội nghề nghiệp", "Không theo kịp XH", "Ít tiếp cận TB", "Cả 3 ý trên"], correct: 3 },
-                    { id: 5, question: "Thông tin mã hóa thành dạng nào để vào máy tính?", options: ["Kí tự", "Hình ảnh", "Dãy bit", "Âm thanh"], correct: 2 },
-                    { id: 6, question: "Chia sẻ ảnh đẹp nhanh nhất dùng dạng nào?", options: ["Ảnh số", "Văn bản", "Ảnh in", "Ảnh vẽ"], correct: 0 },
-                    { id: 7, question: "Đánh giá độ tin cậy thông tin dựa vào:", options: ["Like/Share", "Tính thời sự", "Kinh nghiệm/Hiểu biết", "Độ dài"], correct: 2 },
-                    { id: 8, question: "Tìm thông tin bão lũ ở đâu tin cậy nhất?", options: ["Cổng TT Chính phủ", "Facebook cá nhân", "Web lạ", "Tin đồn"], correct: 0 },
-                    { id: 9, question: "Khác biệt Thuật toán và Chương trình?", options: ["Ngôn ngữ máy", "Ý tưởng vs Lệnh thực thi", "Mã lệnh", "Phần cứng vs Phần mềm"], correct: 1 },
-                    { id: 10, question: "Phát biểu SAI về thuật toán?", options: ["Là dãy bước", "Thực hiện tuần tự", "Điều khiển máy tính", "Biến nhận nhiều giá trị cùng lúc"], correct: 3 },
-                    { id: 11, question: "Biểu thức có giá trị True?", options: ["10+9 <= 11", "25-3 < 12", "2*10 < 31", "14-5 > 13"], correct: 2 },
-                    { id: 12, question: "Tin học giúp làm gì nhanh hơn?", options: ["Viết tay", "Lưu trữ & Xử lý TT", "Vẽ thủ công", "Ghi sổ"], correct: 1 },
-                    { id: 13, question: "Nghề dùng kiến thức Tin học?", options: ["Lập trình viên", "GV Tin", "Thiết kế đồ họa", "Cả 3"], correct: 3 },
-                    { id: 14, question: "Thông tin vào máy tính cần mã hóa thành:", options: ["Chữ viết", "Hình vẽ", "Dãy bit", "Âm thanh"], correct: 2 },
-                    { id: 15, question: "Chia sẻ khoảnh khắc đẹp qua mạng nên dùng:", options: ["Văn bản", "Ảnh số", "Ảnh in", "Tranh vẽ"], correct: 1 },
-                    { id: 16, question: "Kiểm tra tin cậy thông tin bằng cách:", options: ["Xem like", "Xem nguồn", "Tin ngay", "Share ngay"], correct: 1 },
-                    { id: 17, question: "Thuật toán là:", options: ["Thiết bị", "Dãy bước giải quyết vấn đề", "Phần mềm", "Ngôn ngữ"], correct: 1 }
-                ],
-                tf: [
-                    { id: 1, question: "Scratch hỗ trợ lập trình kéo thả.", correct: true },
-                    { id: 2, question: "Mỗi khối lệnh chỉ dùng 1 lần.", correct: false },
-                    { id: 3, question: "Nhân vật thực hiện hành động theo chương trình.", correct: true },
-                    { id: 4, question: "Scratch không giải quyết được bài toán đơn giản.", correct: false },
-                    { id: 5, question: "Cần kiểm tra lại khối lệnh khi chạy sai.", correct: true },
-                    { id: 6, question: "Có thể sửa lỗi bằng cách đổi thứ tự lệnh.", correct: true },
-                    { id: 7, question: "Gỡ lỗi là không cần thiết.", correct: false },
-                    { id: 8, question: "Thử chạy lại giúp phát hiện lỗi.", correct: true }
-                ],
-                fill: [
-                    { id: 1, question: "Lệnh thực hiện lần lượt từ đầu đến cuối là cấu trúc ...", answer: "tuần tự" },
-                    { id: 2, question: "Khối lệnh 'nếu ... thì ...' thuộc cấu trúc ...", answer: "rẽ nhánh" },
-                    { id: 3, question: "Đi thẳng 10 bước 5 lần liên tiếp dùng cấu trúc ...", answer: "lặp" },
-                    { id: 4, question: "Cấu trúc điều khiển giúp chương trình hoạt động ...", answer: "linh hoạt" }
-                ],
-                essay: [
-                    { id: 1, question: "Biến và Hằng dùng để làm gì?", hint: "Biến: Lưu giá trị thay đổi. Hằng: Giá trị không đổi." },
-                    { id: 2, question: "Thuật toán đi hình tam giác đều?", hint: "Lặp 3 lần: Đi thẳng (cạnh) -> Quay 120 độ." },
-                    { id: 3, question: "Lệnh: Quay 90, Đi 50, Lặp 4 lần. Hình gì? Sắp xếp?", hint: "Hình vuông. Sắp xếp: Lặp 4 [Đi 50 -> Quay 90]." }
-                ]
-            },
-            9: {
-                mcq: [
-                    { id: 1, question: "Tác động tiêu cực của công nghệ số đến môi trường?", options: ["Thất nghiệp", "Hại mắt", "Tiết kiệm thời gian", "Rác thải điện tử"], correct: 3 },
-                    { id: 2, question: "Ba màu cơ bản hệ RGB?", options: ["Đỏ-Vàng-Xanh lá", "Đỏ-Xanh lục-Xanh lam", "Vàng-Hồng-Tím", "Đen-Trắng-Xám"], correct: 1 },
-                    { id: 3, question: "Phần mềm mô phỏng dùng trong lĩnh vực nào?", options: ["Học tập & Nghiên cứu", "Chỉ giải trí", "Chỉ vẽ tranh", "Chỉ chơi game"], correct: 0 },
-                    { id: 4, question: "Lợi ích phần mềm mô phỏng?", options: ["Thử nghiệm tiết kiệm/an toàn", "Ô nhiễm", "Tăng chi phí", "Giảm sáng tạo"], correct: 0 },
-                    { id: 5, question: "Chia sẻ tin chưa kiểm chứng gây hậu quả gì?", options: ["Lan truyền nhanh", "Phát tán tin sai/Vi phạm luật", "Năng động", "Không sao"], correct: 1 },
-                    { id: 6, question: "Tại sao phần mềm mô phỏng giúp hiểu bài tốt hơn?", options: ["Giống thực tế", "Nhiều trò chơi", "Không cần nghĩ", "Thay giáo viên"], correct: 0 },
-                    { id: 7, question: "Sao chép bài trên mạng nộp là vi phạm gì?", options: ["Thời gian", "Sở hữu trí tuệ/Đạo đức", "Tìm kiếm", "Không vi phạm"], correct: 1 },
-                    { id: 8, question: "Mô phỏng pha màu giúp hiểu gì?", options: ["Tác dụng màu", "Nguyên lý phối màu", "Bố cục", "Chọn đối tượng"], correct: 1 },
-                    { id: 9, question: "Sơ đồ tư duy đính kèm được tệp nào?", options: ["Chỉ ảnh", "Chỉ văn bản", "Văn bản, ảnh, video", "Chỉ video"], correct: 2 },
-                    { id: 10, question: "Sơ đồ tư duy hỗ trợ tốt nhất việc gì?", options: ["Ghi chép", "Trình bày & Chia sẻ", "Trắc nghiệm", "Học vẹt"], correct: 1 },
-                    { id: 11, question: "Lộ thông tin cá nhân dẫn đến?", options: ["Giảm kết nối", "Đổi thói quen", "Mạo danh/Lừa đảo", "Được chú ý"], correct: 2 },
-                    { id: 12, question: "Trình bày lịch sử phát triển nên dùng:", options: ["Biểu đồ tròn", "Bảng", "Sơ đồ dòng thời gian", "Hình vẽ"], correct: 2 }
-                ],
-                tf: [
-                    { id: 1, question: "Hình ảnh/Video giúp sơ đồ tư duy sinh động hơn.", correct: true },
-                    { id: 2, question: "Chất lượng ảnh không quan trọng.", correct: false },
-                    { id: 3, question: "Cần chọn ảnh phù hợp nội dung.", correct: true },
-                    { id: 4, question: "Dùng ảnh bất kỳ cũng được.", correct: false },
-                    { id: 5, question: "PM mô phỏng không cho đổi tỷ lệ màu.", correct: false },
-                    { id: 6, question: "Chỉ xem màu có sẵn, không pha được.", correct: false },
-                    { id: 7, question: "PM mô phỏng cho phép chỉnh tỷ lệ tạo màu mới.", correct: true },
-                    { id: 8, question: "PM mô phỏng không hỗ trợ học pha màu.", correct: false }
-                ],
-                fill: [
-                    { id: 1, question: "Đạp xe quay máy phát điện, năng lượng chuyển từ ... sang điện năng.", answer: "cơ năng" },
-                    { id: 2, question: "Mô phỏng an toàn hơn vì không gây ... và tốn vật liệu.", answer: "nguy hiểm" },
-                    { id: 3, question: "Chia sẻ tin sai sự thật có thể vi phạm ...", answer: "pháp luật" },
-                    { id: 4, question: "Dùng Internet quá nhiều hại đến ... và học tập.", answer: "sức khỏe" }
-                ],
-                essay: [
-                    { id: 1, question: "Thiết kế sơ đồ tư duy chủ đề yêu thích (MindMaple Lite).", hint: "Chủ đề rõ ràng, nhánh chính/phụ hợp lý, có hình ảnh/video minh họa." }
-                ]
+        window.updateMatchOverride = (key, val) => {
+            if (val === 'AUTO') {
+                update(ref(db, `matches/${key}`), { overrideStatus: null });
+            } else {
+                update(ref(db, `matches/${key}`), { overrideStatus: val });
             }
         };
 
-        // --- GEMINI API HELPER ---
-        const callGeminiAPI = async (prompt) => {
-            const apiKey = ""; // API Key Gemini (Optional)
-            if (!apiKey) return "Chưa có API Key Gemini.";
-            try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                });
-                const data = await response.json();
-                return data.candidates?.[0]?.content?.parts?.[0]?.text || "AI đang bận.";
-            } catch (error) { return "Lỗi kết nối AI."; }
-        };
-
-        // --- COMPONENTS ---
-        const NotificationToast = ({ notification, onClose }) => {
-            if (!notification) return null;
-            const bgColors = { success: 'bg-green-500', error: 'bg-red-500', info: 'bg-blue-500', warning: 'bg-yellow-500' };
-            const Icon = { success: CheckCircle, error: AlertCircle, info: Info, warning: HelpCircle }[notification.type] || Info;
-            return (
-                <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] animate-slide-up">
-                    <div className={`${bgColors[notification.type] || 'bg-slate-800'} text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 min-w-[300px] justify-between`}>
-                        <div className="flex items-center gap-2"><Icon size={20} /><span className="font-semibold text-sm">{notification.msg}</span></div>
-                        <button onClick={onClose} className="hover:bg-white/20 rounded-full p-1"><X size={16}/></button>
-                    </div>
-                </div>
-            );
-        };
-
-        const ChangePasswordModal = ({ onClose, onChangePassword, notify }) => {
-            const [newPwd, setNewPwd] = useState("");
-            const [confirmPwd, setConfirmPwd] = useState("");
-            const [error, setError] = useState("");
-
-            const handleSubmit = (e) => {
-                e.preventDefault();
-                if (newPwd.length < 4) return setError("Mật khẩu phải có ít nhất 4 ký tự.");
-                if (newPwd !== confirmPwd) return setError("Mật khẩu xác nhận không khớp.");
-                onChangePassword(newPwd);
-                onClose();
-            };
-
-            return (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[70] flex items-center justify-center p-4 animate-in">
-                    <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-sm animate-slide-up">
-                        <h3 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
-                            <Key size={20} className="text-indigo-600" /> Đổi Mật Khẩu Admin
-                        </h3>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-semibold text-slate-600 mb-1">Mật khẩu mới</label>
-                                <input 
-                                    type="password" 
-                                    value={newPwd}
-                                    onChange={(e) => setNewPwd(e.target.value)}
-                                    className="w-full p-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                    autoFocus
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-semibold text-slate-600 mb-1">Xác nhận mật khẩu</label>
-                                <input 
-                                    type="password" 
-                                    value={confirmPwd}
-                                    onChange={(e) => setConfirmPwd(e.target.value)}
-                                    className="w-full p-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                />
-                            </div>
-                            {error && <p className="text-red-500 text-sm">{error}</p>}
-                            <div className="flex gap-2 pt-2">
-                                <button type="button" onClick={onClose} className="flex-1 py-2 bg-slate-100 text-slate-600 font-bold rounded-lg hover:bg-slate-200">Hủy</button>
-                                <button type="submit" className="flex-1 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700">Lưu</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            );
-        };
-
-        const CourseRegistrationModal = ({ onClose, onRegister, defaultGrade, courseType, notify }) => {
-            const [studentName, setStudentName] = useState("");
-            const [phone, setPhone] = useState("");
-            const [email, setEmail] = useState("");
-            const [regGrade, setRegGrade] = useState(defaultGrade || 8);
-            const [isSubmitting, setIsSubmitting] = useState(false);
-            const isScratch = courseType === 'scratch';
-
-            const handleSubmit = async (e) => {
-                e.preventDefault();
-                if (!studentName.trim() || !phone.trim()) return notify("Nhập thiếu thông tin!", "error");
-                setIsSubmitting(true);
-                await onRegister({ studentName, phone, email, regGrade, courseType });
-                setIsSubmitting(false);
-            };
-
-            return (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[60] flex items-center justify-center p-4 animate-in overflow-y-auto">
-                    <div className="bg-slate-900 text-white rounded-2xl shadow-2xl w-full max-w-lg border border-slate-700 animate-slide-up relative">
-                        <div className={`bg-gradient-to-r ${isScratch ? "from-orange-500 to-red-500" : "from-blue-600 to-cyan-600"} p-4 relative`}>
-                            <button onClick={onClose} className="absolute top-3 right-3 text-white/80 hover:bg-white/20 rounded-full p-1"><XCircle size={24}/></button>
-                            <h2 className="text-xl font-bold">{isScratch ? "Lập trình Scratch" : "Lập trình Python"}</h2>
-                            <p className="text-white/80 text-sm">Điền thông tin để thầy liên hệ nhé!</p>
-                        </div>
-                        <div className="p-6">
-                            <form onSubmit={handleSubmit} className="space-y-4">
-                                <div><label className="block text-sm text-slate-400 mb-1">Họ tên</label><input type="text" value={studentName} onChange={e=>setStudentName(e.target.value)} className="w-full bg-slate-800 border border-slate-600 rounded-xl p-3 text-white focus:ring-2 focus:ring-cyan-500 outline-none" placeholder="Nguyễn Văn A" required/></div>
-                                <div><label className="block text-sm text-slate-400 mb-1">Lớp đăng ký</label><div className="flex gap-2">{[6,7,8,9].map(g=><button key={g} type="button" onClick={()=>setRegGrade(g)} className={`flex-1 py-2 rounded-lg border ${regGrade===g?'bg-yellow-400 text-slate-900 border-yellow-400':'border-slate-600 text-slate-400'}`}>Lớp {g}</button>)}</div></div>
-                                <div><label className="block text-sm text-slate-400 mb-1">SĐT Zalo</label><input type="tel" value={phone} onChange={e=>setPhone(e.target.value)} className="w-full bg-slate-800 border border-slate-600 rounded-xl p-3 text-white focus:ring-2 focus:ring-cyan-500 outline-none" placeholder="09xxxxxxx" required/></div>
-                                <button type="submit" disabled={isSubmitting} className={`w-full py-3 bg-white text-slate-900 font-bold rounded-xl hover:bg-slate-200 flex justify-center items-center gap-2 ${isSubmitting?'opacity-70':''}`}>{isSubmitting ? <Loader2 className="animate-spin"/> : <Edit3 size={18}/>} {isSubmitting ? "Đang gửi..." : "Gửi Đăng Ký"}</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        const AdminScreen = ({ onBack, studentList, onDeleteHistory, onUploadData, onChangePassword, onUpdateClassStructure, classStructure, notify }) => {
-            const [activeTab, setActiveTab] = useState('history');
-            const [filterGrade, setFilterGrade] = useState('ALL');
-            const [newClassInput, setNewClassInput] = useState({ grade: 6, name: "" });
-            const [showPwdModal, setShowPwdModal] = useState(false);
-            const [isDeleting, setIsDeleting] = useState(false);
-            const fileInputRef = useRef(null);
-
-            const handleDownloadTemplate = () => {
-                if (!window.XLSX) return notify("Lỗi thư viện Excel. Vui lòng tải lại trang.", "error");
-                const rows = [["Lớp","Loại","Câu hỏi","A","B","C","D","Đáp án"],[8,"TN","Tin học ứng dụng lĩnh vực nào?","Y tế","Giáo dục","Quốc phòng","Cả 3","D"]];
-                const wb = window.XLSX.utils.book_new();
-                const ws = window.XLSX.utils.aoa_to_sheet(rows);
-                window.XLSX.utils.book_append_sheet(wb, ws, "Mau");
-                window.XLSX.writeFile(wb, "Mau_Cau_Hoi.xlsx");
-            };
-
-            const handleFileChange = (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = (evt) => {
-                    try {
-                        const wb = window.XLSX.read(new Uint8Array(evt.target.result), {type:'array'});
-                        const json = window.XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
-                        notify("Đã đọc file! (Lưu ý: Tính năng lưu câu hỏi lên Cloud đang phát triển)", "success");
-                    } catch (err) { notify("Lỗi file!", "error"); }
-                };
-                reader.readAsArrayBuffer(file);
-            };
-
-            const handleDelete = async () => {
-                setIsDeleting(true);
-                await onDeleteHistory();
-                setIsDeleting(false);
-            };
-
-            const filteredList = studentList.filter(s => filterGrade === 'ALL' || s.grade?.toString() === filterGrade);
-            const pythonStudents = studentList.filter(s => s.pythonReg);
-            const scratchStudents = studentList.filter(s => s.scratchReg);
-
-            return (
-                <div className="min-h-screen bg-slate-100 p-2 md:p-6 animate-in">
-                    <div className="max-w-6xl mx-auto bg-white rounded-3xl shadow-xl overflow-hidden">
-                        <div className="bg-indigo-900 p-4 text-white flex justify-between items-center">
-                            <div className="flex items-center gap-3"><Lock size={24} className="text-yellow-400"/><h2 className="text-xl font-bold">Quản Trị Hệ Thống</h2></div>
-                            <div className="flex gap-2">
-                                <button onClick={() => setShowPwdModal(true)} className="bg-white/10 px-3 py-2 rounded hover:bg-white/20 text-sm flex gap-2 items-center transition-colors"><Key size={16}/> Đổi MK</button>
-                                <button onClick={onBack} className="bg-white/10 px-3 py-2 rounded hover:bg-white/20 text-sm flex gap-2 items-center transition-colors"><LogOut size={16}/> Thoát</button>
-                            </div>
-                        </div>
-                        {showPwdModal && <ChangePasswordModal onClose={() => setShowPwdModal(false)} onChangePassword={onChangePassword} notify={notify} />}
-                        
-                        <div className="p-4 md:p-6">
-                            <div className="grid md:grid-cols-2 gap-4 mb-6">
-                                <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                                    <h3 className="font-bold text-blue-900 flex gap-2 mb-2"><Database size={18}/> Quản lý Câu hỏi (Excel)</h3>
-                                    <div className="flex gap-2">
-                                        <button onClick={handleDownloadTemplate} className="flex-1 px-3 py-2 bg-white border rounded shadow-sm text-sm font-bold flex justify-center items-center gap-1 hover:bg-slate-50 transition-colors"><Download size={14}/> Mẫu</button>
-                                        <button onClick={() => fileInputRef.current.click()} className="flex-1 px-3 py-2 bg-blue-600 text-white rounded shadow-sm text-sm font-bold flex justify-center items-center gap-1 hover:bg-blue-700 transition-colors"><Upload size={14}/> Upload</button>
-                                        <input type="file" ref={fileInputRef} className="hidden" accept=".xlsx" onChange={handleFileChange}/>
-                                    </div>
-                                    <p className="text-xs text-blue-700 mt-2">* Tải file mẫu, điền câu hỏi và upload lại.</p>
-                                </div>
-                                <div className="p-4 bg-green-50 border border-green-200 rounded-xl">
-                                    <h3 className="font-bold text-green-900 mb-2">Cấu trúc Lớp học (Cloud)</h3>
-                                    <div className="flex gap-2">
-                                        <select value={newClassInput.grade} onChange={e=>setNewClassInput({...newClassInput, grade: Number(e.target.value)})} className="border rounded px-2 py-1 text-sm bg-white"><option value={6}>K6</option><option value={7}>K7</option><option value={8}>K8</option><option value={9}>K9</option></select>
-                                        <input type="text" placeholder="Tên lớp (VD: 8A1)" value={newClassInput.name} onChange={e=>setNewClassInput({...newClassInput, name: e.target.value})} className="flex-1 border rounded px-2 py-1 text-sm"/>
-                                        <button onClick={()=>{onUpdateClassStructure(newClassInput.grade, newClassInput.name); setNewClassInput({...newClassInput, name: ""})}} className="bg-green-600 text-white px-3 py-1 rounded text-sm font-bold">Thêm</button>
-                                    </div>
-                                    <div className="mt-2 text-xs text-slate-500">Các lớp hiện có: {Object.values(classStructure).flat().length} lớp</div>
-                                </div>
-                            </div>
-
-                            <div className="flex gap-2 mb-4 border-b pb-2 overflow-x-auto no-scrollbar">
-                                <button onClick={() => setActiveTab('history')} className={`whitespace-nowrap px-3 py-2 font-bold text-sm rounded flex gap-2 items-center transition-colors ${activeTab==='history'?'bg-indigo-100 text-indigo-700':'text-slate-500 hover:bg-slate-100'}`}><List size={16}/> Lịch sử</button>
-                                <button onClick={() => setActiveTab('python')} className={`whitespace-nowrap px-3 py-2 font-bold text-sm rounded flex gap-2 items-center transition-colors ${activeTab==='python'?'bg-yellow-100 text-yellow-700':'text-slate-500 hover:bg-slate-100'}`}><Code size={16}/> Python ({pythonStudents.length})</button>
-                                <button onClick={() => setActiveTab('scratch')} className={`whitespace-nowrap px-3 py-2 font-bold text-sm rounded flex gap-2 items-center transition-colors ${activeTab==='scratch'?'bg-orange-100 text-orange-700':'text-slate-500 hover:bg-slate-100'}`}><Gamepad2 size={16}/> Scratch ({scratchStudents.length})</button>
-                            </div>
-
-                            {activeTab === 'history' && (
-                                <div className="animate-in">
-                                    <div className="flex flex-wrap gap-2 mb-4 items-center">
-                                        <select onChange={e=>setFilterGrade(e.target.value)} className="border p-2 rounded text-sm bg-white"><option value="ALL">Tất cả Khối</option><option value="6">K6</option><option value="7">K7</option><option value="8">K8</option><option value="9">K9</option></select>
-                                        <button onClick={handleDelete} disabled={isDeleting} className={`ml-auto text-red-600 border border-red-200 bg-red-50 px-3 py-2 rounded hover:bg-red-100 text-sm flex items-center gap-1 font-bold ${isDeleting ? 'opacity-50' : ''}`}>
-                                            {isDeleting ? <Loader2 size={16} className="animate-spin"/> : <Trash2 size={16}/>} Xóa TOÀN BỘ lịch sử
-                                        </button>
-                                    </div>
-                                    <div className="overflow-x-auto border rounded-xl shadow-sm max-h-[500px] overflow-y-auto">
-                                        <table className="w-full text-left">
-                                            <thead className="bg-slate-50 border-b sticky top-0"><tr><th className="p-3">Học sinh</th><th className="p-3">Lớp</th><th className="p-3">Thời gian</th><th className="p-3 text-right">Điểm</th></tr></thead>
-                                            <tbody>
-                                                {filteredList.map((s) => (
-                                                    <tr key={s.id} className="border-b hover:bg-slate-50 text-sm transition-colors">
-                                                        <td className="p-3 font-bold text-indigo-900">{s.name}</td>
-                                                        <td className="p-3"><span className="bg-blue-100 px-2 py-1 rounded text-xs text-blue-800 font-bold">{s.className}</span></td>
-                                                        <td className="p-3 text-slate-500">{s.loginTime}</td>
-                                                        <td className="p-3 text-right font-bold text-green-600">{s.lastScore!==undefined ? s.lastScore : '-'}</td>
-                                                    </tr>
-                                                ))}
-                                                {filteredList.length === 0 && <tr><td colSpan="4" className="p-8 text-center text-slate-400">Chưa có dữ liệu</td></tr>}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            )}
-                             {(activeTab === 'python' || activeTab === 'scratch') && (
-                                <div className="overflow-x-auto border rounded-xl shadow-sm animate-in">
-                                    <table className="w-full text-left min-w-[700px]">
-                                        <thead className={`border-b ${activeTab==='python'?'bg-yellow-50':'bg-orange-50'}`}>
-                                            <tr><th className="p-3">Họ Tên</th><th className="p-3">Lớp (Trường)</th><th className="p-3">Đăng ký</th><th className="p-3">SĐT</th><th className="p-3">Ngày ĐK</th></tr>
-                                        </thead>
-                                        <tbody>
-                                            {(activeTab==='python' ? pythonStudents : scratchStudents).map((s) => {
-                                                const reg = activeTab==='python' ? s.pythonReg : s.scratchReg;
-                                                return (
-                                                    <tr key={s.id} className="border-b hover:bg-slate-50 text-sm transition-colors">
-                                                        <td className="p-3 font-bold">{reg.studentName}</td>
-                                                        <td className="p-3">{s.className}</td>
-                                                        <td className="p-3"><span className="font-bold border px-2 py-1 rounded bg-white shadow-sm">Lớp {reg.regGrade}</span></td>
-                                                        <td className="p-3 font-mono text-indigo-600 font-semibold">{reg.phone}</td>
-                                                        <td className="p-3 text-slate-500">{s.dateKey}</td>
-                                                    </tr>
-                                                );
-                                            })}
-                                            {(activeTab==='python' ? pythonStudents : scratchStudents).length === 0 && <tr><td colSpan="5" className="p-8 text-center text-slate-400">Chưa có đăng ký nào.</td></tr>}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        // --- RESTORED WELCOME SCREEN ---
-        const WelcomeScreen = ({ onLogin, onAdminLogin, adminPassword, classStructure, notify }) => {
-            const [name, setName] = useState("");
-            const [grade, setGrade] = useState(8);
-            const [className, setClassName] = useState("");
-            const [isPhoneLogin, setIsPhoneLogin] = useState(false);
-            const [showAdminModal, setShowAdminModal] = useState(false);
-            const [adminPwdInput, setAdminPwdInput] = useState("");
-            const [loading, setLoading] = useState(false);
-
-            useEffect(() => {
-                if (classStructure[grade] && classStructure[grade].length > 0) setClassName(classStructure[grade][0]);
-                else setClassName("");
-            }, [grade, classStructure]);
-
-            const handleLogin = async () => {
-                if (!name.trim()) return notify("Vui lòng nhập tên!", "error");
-                if (!db) return notify("Đang kết nối Firebase, vui lòng đợi...", "warning");
-                setLoading(true);
-                await onLogin({name, grade, className});
-                setLoading(false);
-            };
-
-            return (
-                <div className="flex flex-col items-center justify-center min-h-screen p-4 text-white relative bg-cover bg-center overflow-hidden" style={{backgroundImage: `url('${BACKGROUND_IMAGE}')`, backgroundColor: '#1e293b'}}>
-                    <div className="absolute inset-0 bg-slate-900/60 z-0"></div>
-                    <button onClick={() => setShowAdminModal(true)} className="absolute top-4 right-4 bg-white/10 p-2 rounded-full hover:bg-white/20 z-20"><Lock size={20}/></button>
-
-                    {showAdminModal && (
-                        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-                            <div className="bg-white text-slate-900 p-6 rounded-xl w-full max-w-sm">
-                                <h3 className="font-bold mb-4">Đăng nhập Quản trị</h3>
-                                <input type="password" value={adminPwdInput} onChange={e=>setAdminPwdInput(e.target.value)} className="w-full border p-2 rounded mb-4 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Mật khẩu"/>
-                                <div className="flex gap-2"><button onClick={()=>setShowAdminModal(false)} className="flex-1 bg-slate-200 py-2 rounded font-bold">Hủy</button><button onClick={()=>{if(adminPwdInput===adminPassword) onAdminLogin(); else notify("Sai mật khẩu!","error")}} className="flex-1 bg-indigo-600 text-white py-2 rounded font-bold">Vào</button></div>
-                            </div>
-                        </div>
-                    )}
-
-                    <div className="bg-white/10 backdrop-blur-md p-6 md:p-8 rounded-3xl shadow-2xl w-full max-w-md border border-white/20 relative z-10 animate-slide-up">
-                        <div className="text-center mb-6 md:mb-8">
-                            <div className="bg-gradient-to-tr from-yellow-400 to-orange-500 w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg animate-bounce"><Monitor size={40} className="text-white md:w-12 md:h-12"/></div>
-                            <h1 className="text-xl md:text-2xl font-bold mb-2 text-white uppercase leading-snug drop-shadow-lg">
-                                ĐAM MÊ TIN HỌC VỚI THẦY LÊ ĐÌNH CƯƠNG<br/>
-                                TRƯỜNG THCS CƯ PUI
-                            </h1>
-                            <div className="mt-4 p-3 bg-black/30 border border-white/20 rounded-xl backdrop-blur-sm inline-block">
-                                <p className="text-yellow-300 font-bold text-sm md:text-base flex items-center justify-center gap-2">
-                                    <Phone size={16} className="animate-pulse"/> Thông tin liên hệ: Zalo 0967080202
-                                </p>
-                            </div>
-                        </div>
-                        <div className="space-y-4">
-                            <div className="flex bg-black/30 rounded-xl p-1 border border-white/10">
-                                <button className={`flex-1 py-2 rounded-lg transition-all text-sm md:text-base ${!isPhoneLogin?'bg-white text-indigo-900 font-bold':'text-white'}`} onClick={()=>setIsPhoneLogin(false)}><User size={16} className="inline mr-1"/> Học sinh</button>
-                                <button className={`flex-1 py-2 rounded-lg transition-all text-sm md:text-base ${isPhoneLogin?'bg-white text-indigo-900 font-bold':'text-white'}`} onClick={()=>setIsPhoneLogin(true)}><Smartphone size={16} className="inline mr-1"/> Phụ huynh</button>
-                            </div>
-                            <input type={isPhoneLogin?"tel":"text"} value={name} onChange={e=>setName(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/20 text-white font-bold placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400" placeholder={isPhoneLogin?"Số điện thoại...":"Nhập tên của em..."}/>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div><label className="text-blue-200 text-sm">Khối</label><select value={grade} onChange={e=>setGrade(Number(e.target.value))} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/20 text-white font-bold"><option className="text-black" value={6}>6</option><option className="text-black" value={7}>7</option><option className="text-black" value={8}>8</option><option className="text-black" value={9}>9</option></select></div>
-                                <div><label className="text-blue-200 text-sm">Lớp</label><select value={className} onChange={e=>setClassName(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/20 text-white font-bold">{classStructure[grade]?.map(c=><option className="text-black" key={c} value={c}>{c}</option>)}</select></div>
-                            </div>
-                            <button onClick={handleLogin} disabled={loading} className="w-full py-3 md:py-4 mt-4 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-xl font-bold text-indigo-900 text-lg shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2">{loading ? <Loader2 className="animate-spin"/> : <Play size={24} fill="currentColor"/>} BẮT ĐẦU ÔN LUYỆN</button>
-                        </div>
-                    </div>
-                    <p className="mt-6 text-sm text-white/50 relative z-10">© 2025 Design by Thầy Lê Đình Cương GV Tin Học THCS Cư Pui</p>
-                </div>
-            );
-        };
-
-        const Dashboard = ({ user, onSelectMode, onLogout, onOpenCourse }) => (
-            <div className="min-h-screen bg-slate-50 animate-in">
-                <header className="bg-indigo-900 text-white p-4 shadow-lg sticky top-0 z-40 flex justify-between items-center backdrop-blur-md bg-indigo-900/95">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-yellow-400 flex items-center justify-center text-indigo-900 font-bold shadow-inner">{user.grade}</div>
-                        <div><h2 className="font-bold text-base md:text-lg">{user.name}</h2><p className="text-xs text-indigo-200 font-medium">{user.className}</p></div>
-                    </div>
-                    <button onClick={onLogout} className="text-sm bg-white/10 px-4 py-2 rounded-lg hover:bg-white/20 font-semibold transition-colors">Thoát</button>
-                </header>
-                <div className="max-w-4xl mx-auto p-4 md:p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                        <div className="p-6 bg-gradient-to-br from-slate-800 to-indigo-900 rounded-2xl md:rounded-3xl shadow-xl text-white relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 w-40 h-40 bg-cyan-500/20 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-cyan-500/30 transition-all"></div>
-                            <h3 className="text-lg md:text-xl font-bold mb-1 flex gap-2 items-center"><Code className="text-cyan-400"/> LẬP TRÌNH PYTHON</h3>
-                            <button onClick={()=>onOpenCourse('python')} className="w-full bg-white/10 border border-white/20 py-2 rounded-xl text-sm font-bold mt-4 hover:bg-white/20 transition-all">Đăng ký ngay</button>
-                        </div>
-                        <div className="p-6 bg-gradient-to-br from-orange-600 to-red-700 rounded-2xl md:rounded-3xl shadow-xl text-white relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 w-40 h-40 bg-yellow-500/20 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-yellow-500/30 transition-all"></div>
-                            <h3 className="text-lg md:text-xl font-bold mb-1 flex gap-2 items-center"><Gamepad2 className="text-yellow-300"/> LẬP TRÌNH SCRATCH</h3>
-                            <button onClick={()=>onOpenCourse('scratch')} className="w-full bg-white/10 border border-white/20 py-2 rounded-xl text-sm font-bold mt-4 hover:bg-white/20 transition-all">Đăng ký ngay</button>
-                        </div>
-                    </div>
-                    <h3 className="text-xl md:text-2xl font-bold text-slate-800 mb-4 md:mb-6 flex items-center gap-2"><Star className="text-yellow-500" fill="currentColor"/> Chọn thử thách</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                        {[{id:'mcq',t:'Trắc Nghiệm',i:<CheckCircle size={28}/>,c:'from-blue-500 to-cyan-400'},{id:'tf',t:'Đúng / Sai',i:<HelpCircle size={28}/>,c:'from-green-500 to-emerald-400'},{id:'fill',t:'Điền Khuyết',i:<Edit3 size={28}/>,c:'from-purple-500 to-pink-400'},{id:'essay',t:'Tự Luận',i:<BookOpen size={28}/>,c:'from-orange-500 to-red-400'}].map(m=>(
-                            <button key={m.id} onClick={()=>onSelectMode(m.id)} className={`relative p-5 md:p-6 rounded-2xl shadow-lg hover:-translate-y-1 transition-all bg-gradient-to-br ${m.c} text-white text-left overflow-hidden group`}>
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-10 -mt-10 group-hover:scale-150 transition-transform"></div>
-                                <div className="relative z-10 flex justify-between items-center"><div><h4 className="text-xl md:text-2xl font-bold">{m.t}</h4></div><div className="p-3 bg-white/20 rounded-xl">{m.i}</div></div>
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            </div>
-        );
-
-        const GameScreen = ({ user, mode, onFinish, onBack, questionData }) => {
-            const [qIdx, setQIdx] = useState(0);
-            const [score, setScore] = useState(0);
-            const [feedback, setFeedback] = useState(null);
-            const [inputVal, setInputVal] = useState("");
-            const [showHint, setShowHint] = useState(false);
-            const [aiRes, setAiRes] = useState(null);
-            const [loadingAI, setLoadingAI] = useState(false);
-            const questions = questionData[user.grade]?.[mode] || [];
-            const q = questions[qIdx];
-            useEffect(() => { setAiRes(null); setLoadingAI(false); setShowHint(false); setInputVal(""); setFeedback(null); }, [qIdx]);
-
-            if(!q) return <div className="min-h-screen flex items-center justify-center flex-col bg-slate-50"><p className="text-xl font-bold text-slate-500 mb-4">Chưa có câu hỏi.</p><button onClick={onBack} className="bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold">Quay lại</button></div>;
-
-            const handleAns = (ans) => {
-                if(feedback) return;
-                const isCorrect = (mode==='mcq' || mode==='tf') ? ans === q.correct : inputVal.toLowerCase().trim() === q.answer?.toLowerCase().trim();
-                setFeedback(isCorrect?'correct':'wrong');
-                if(isCorrect) setScore(score+10);
-                setTimeout(() => {
-                    if(qIdx < questions.length-1) setQIdx(qIdx+1);
-                    else onFinish({score: isCorrect?score+10:score, total: questions.length*10});
-                }, isCorrect ? 1500 : 3000); 
-            };
-            const askAI = async (type) => {
-                setLoadingAI(true);
-                const p = type==='hint' ? `Gợi ý ngắn gọn cho câu hỏi: "${q.question}"` : `Chấm điểm câu trả lời: "${inputVal}" cho câu hỏi "${q.question}". Gợi ý: "${q.hint}"`;
-                const res = await callGeminiAPI(p);
-                setAiRes(res);
-                setLoadingAI(false);
-            };
-
-            return (
-                <div className="min-h-screen bg-slate-100 flex flex-col animate-in">
-                    <div className="bg-white p-4 shadow-sm flex justify-between items-center px-4 md:px-6 sticky top-0 z-30">
-                        <button onClick={onBack}><XCircle className="text-slate-400 hover:text-slate-600" size={28}/></button>
-                        <div className="flex-1 mx-4 h-3 bg-slate-200 rounded-full overflow-hidden"><div className="h-full bg-yellow-400 transition-all duration-500" style={{width:`${((qIdx+1)/questions.length)*100}%`}}></div></div>
-                        <span className="font-bold text-indigo-900 text-sm">{qIdx+1}/{questions.length}</span>
-                    </div>
-                    <div className="flex-1 p-4 max-w-3xl mx-auto w-full flex flex-col justify-center">
-                        <div className="w-full flex justify-end mb-2"><button onClick={()=>askAI('hint')} disabled={loadingAI} className="flex gap-2 items-center text-sm font-bold text-purple-600 bg-purple-100 px-4 py-2 rounded-full hover:bg-purple-200">{loadingAI?<Loader2 className="animate-spin" size={16}/>:<Sparkles size={16}/>} AI Gợi ý</button></div>
-                        <div className="bg-white p-6 rounded-3xl shadow-xl w-full text-center mb-6 relative overflow-hidden">
-                            {feedback==='correct' && <div className="absolute inset-0 bg-green-500/95 flex items-center justify-center z-20 text-white text-3xl font-bold animate-in"><CheckCircle size={60} className="mb-2 block mx-auto"/> ĐÚNG!</div>}
-                            {feedback==='wrong' && <div className="absolute inset-0 bg-red-500/95 flex flex-col items-center justify-center z-20 text-white animate-in p-6"><XCircle size={60} className="mb-2 block mx-auto"/><h2 className="text-3xl font-bold mb-4">SAI RỒI!</h2><div className="bg-white/20 p-4 rounded-xl text-lg">Đáp án: {mode === 'mcq' ? q.options[q.correct] : mode === 'tf' ? (q.correct ? "ĐÚNG" : "SAI") : q.answer}</div></div>}
-                            <h2 className="text-xl md:text-2xl font-bold text-slate-800 leading-relaxed mb-4">{q.question}</h2>
-                            {aiRes && <div className="bg-purple-50 p-4 rounded-xl border border-purple-200 text-sm text-left mb-4"><strong className="text-purple-700">AI:</strong> {aiRes}</div>}
-                            <div className="w-full">
-                                {mode==='mcq' && <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{q.options.map((o,i)=><button key={i} onClick={()=>handleAns(i)} className="p-4 bg-white border-2 rounded-xl font-semibold hover:border-indigo-500 hover:bg-indigo-50 text-left flex gap-3 text-sm md:text-base"><span className="text-indigo-600 font-bold bg-indigo-50 w-6 h-6 rounded-full flex items-center justify-center">{String.fromCharCode(65+i)}</span> {o}</button>)}</div>}
-                                {mode==='tf' && <div className="grid grid-cols-2 gap-4"><button onClick={()=>handleAns(true)} className="p-8 bg-green-50 border-2 border-green-200 rounded-2xl font-bold text-green-700 hover:bg-green-100 text-xl">ĐÚNG</button><button onClick={()=>handleAns(false)} className="p-8 bg-red-50 border-2 border-red-200 rounded-2xl font-bold text-red-700 hover:bg-red-100 text-xl">SAI</button></div>}
-                                {(mode==='fill' || mode==='essay') && <div className="flex flex-col gap-4">
-                                    {mode==='fill' ? <input type="text" value={inputVal} onChange={e=>setInputVal(e.target.value)} className="p-4 border-2 rounded-xl text-center text-lg font-bold text-indigo-900 outline-none focus:border-indigo-500" placeholder="Đáp án..."/> : <textarea rows="4" value={inputVal} onChange={e=>setInputVal(e.target.value)} className="p-4 border-2 rounded-xl text-base outline-none focus:border-orange-500" placeholder="Trả lời..."/>}
-                                    {showHint && <div className="bg-yellow-50 p-3 rounded text-yellow-800 text-sm border border-yellow-200">Gợi ý: {q.hint}</div>}
-                                    <div className="flex gap-3">
-                                        {mode==='essay' && <button onClick={()=>setShowHint(true)} className="px-4 py-3 bg-slate-100 font-bold rounded-xl text-slate-600 text-sm">Gợi ý</button>}
-                                        {mode==='essay' && <button onClick={()=>askAI('grade')} className="flex-1 bg-purple-600 text-white font-bold rounded-xl flex justify-center items-center gap-2 text-sm">Chấm điểm AI</button>}
-                                        <button onClick={mode==='fill' ? handleAns : () => { if(qIdx<questions.length-1) setQIdx(qIdx+1); else onFinish({score, total:0}); }} className="flex-1 bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 shadow-lg">{mode==='fill'?'Kiểm tra':'Tiếp theo'}</button>
-                                    </div>
-                                </div>}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        const ResultScreen = ({ score, total, onRetry, onHome }) => (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-6 text-center animate-in">
-                <div className="w-32 h-32 rounded-full bg-yellow-100 flex items-center justify-center mb-6 shadow-2xl animate-bounce border-4 border-white"><Trophy size={64} className="text-yellow-600"/></div>
-                <h2 className="text-3xl font-extrabold text-slate-800 mb-2">Hoàn Thành!</h2>
-                <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-100 mb-8 w-full max-w-xs">
-                    <p className="text-slate-500 mb-2 text-sm uppercase font-bold">Tổng điểm</p>
-                    <p className="text-5xl font-black text-indigo-600">{score} <span className="text-2xl text-slate-400 font-normal">/ {total}</span></p>
-                </div>
-                <div className="flex flex-col w-full max-w-xs gap-3">
-                    <button onClick={onRetry} className="w-full py-3.5 bg-indigo-600 text-white rounded-xl font-bold flex justify-center items-center gap-2 hover:bg-indigo-700 shadow-lg"><RefreshCcw size={20}/> Làm lại</button>
-                    <button onClick={onHome} className="w-full py-3.5 bg-white border border-slate-300 text-slate-700 rounded-xl font-bold hover:bg-slate-50">Về Trang Chủ</button>
-                </div>
-            </div>
-        );
-
-        // --- MAIN APP ---
-        const App = () => {
-            const [user, setUser] = useState(null);
-            const [screen, setScreen] = useState('welcome');
-            const [currentMode, setCurrentMode] = useState(null);
-            const [lastResult, setLastResult] = useState({ score: 0, total: 0 });
-            const [questionData, setQuestionData] = useState(DEFAULT_QUESTION_BANK);
-            const [studentList, setStudentList] = useState([]);
-            const [showCourseModal, setShowCourseModal] = useState(false);
-            const [adminPassword, setAdminPassword] = useState(() => localStorage.getItem('admin_pwd') || 'admin');
-            const [classStructure, setClassStructure] = useState(DEFAULT_CLASS_STRUCTURE);
-            const [notification, setNotification] = useState(null);
+        // --- CALCULATE STATUS (WITH DRAW SUPPORT & OVERRIDE) ---
+        // Logic removed from here, handled inside onValue loop now
+        // But we need the logic function for reuse
+        const calculateStatus = (pick, ft, teams) => {
+            if (!ft || ft === "?-?" || ft === "") return "PENDING";
+            let cleanFT = ft.replace(/[-–\s]+/g, ":"); 
+            const scores = cleanFT.split(':').map(s => parseFloat(s));
+            if (scores.length < 2 || isNaN(scores[0]) || isNaN(scores[1])) return "PENDING";
             
-            // State cho Firebase Setup
-            const [firebaseInitialized, setFirebaseInitialized] = useState(false);
+            const hScore = scores[0];
+            const aScore = scores[1];
+            const totalScore = hScore + aScore;
+            const upperPick = pick.toUpperCase(); 
+            
+            // 1. OVER/UNDER
+            if (upperPick.includes("OVER")) return totalScore > parseFloat(upperPick.replace("OVER", "").trim()) ? "WON" : "LOST";
+            if (upperPick.includes("UNDER")) return totalScore < parseFloat(upperPick.replace("UNDER", "").trim()) ? "WON" : "LOST";
 
-            // --- INIT FIREBASE ---
-            useEffect(() => {
-                const initFirebase = async () => {
-                    try {
-                        let app;
-                        if (getApps().length === 0) {
-                            app = initializeApp(firebaseConfig);
-                        } else {
-                            app = getApp();
-                        }
-                        auth = getAuth(app);
-                        db = getFirestore(app);
-                        
-                        // Try to sign in
-                        try {
-                             await signInAnonymously(auth);
-                        } catch (authError) {
-                            if (authError.code === 'auth/configuration-not-found' || authError.code === 'auth/admin-restricted-operation') {
-                                notify("Lỗi: Chưa bật Authentication trong Firebase Console! Hãy bật 'Anonymous' provider.", "error");
-                                console.error("Please enable Authentication > Sign-in method > Anonymous in Firebase Console.");
-                                return; // Stop here if auth fails
-                            }
-                            throw authError;
-                        }
-
-                        setFirebaseInitialized(true);
-                        console.log("Firebase Connected!");
-                    } catch (e) {
-                        console.error("Firebase init failed:", e);
-                        notify("Lỗi kết nối Firebase: " + e.message, "error");
-                    }
-                };
-                initFirebase();
-            }, []);
-
-            // --- FIREBASE REALTIME LISTENERS ---
-            useEffect(() => {
-                if (!firebaseInitialized || !db) return;
-
-                // 1. Lắng nghe danh sách học sinh (Realtime)
-                const q = query(collection(db, "students"), orderBy("createdAt", "desc"));
-                const unsubStudents = onSnapshot(q, (snapshot) => {
-                    const students = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    setStudentList(students);
-                }, (error) => {
-                    console.error("Sync students error:", error);
-                    if (error.code === 'permission-denied') {
-                        notify("Lỗi quyền truy cập: Hãy kiểm tra Rules hoặc tạo Database trong Console.", "error");
-                    } else if (error.message.includes("API has not been used")) {
-                         notify("Lỗi: Chưa tạo Database Firestore trong Console.", "error");
-                    } else {
-                        notify("Lỗi đồng bộ dữ liệu: " + error.code, "error");
-                    }
-                });
-
-                // 2. Lắng nghe cấu trúc lớp học (Realtime)
-                const unsubClasses = onSnapshot(doc(db, "config", "classes"), (doc) => {
-                    if (doc.exists()) {
-                        setClassStructure(doc.data());
-                        localStorage.setItem('class_structure', JSON.stringify(doc.data())); // Backup local
-                    }
-                });
-
-                return () => {
-                    unsubStudents && unsubStudents();
-                    unsubClasses && unsubClasses();
-                };
-            }, [firebaseInitialized]);
-
-            const notify = (msg, type='info') => { setNotification({msg, type}); setTimeout(() => setNotification(null), 3000); };
-
-            // --- FIREBASE ACTIONS ---
-            const handleLogin = async (userData) => { 
-                const now = new Date();
-                const studentData = { 
-                    ...userData, 
-                    loginTime: now.toLocaleString('vi-VN'), 
-                    dateKey: now.toLocaleDateString('vi-VN'),
-                    createdAt: serverTimestamp() // Dùng giờ server để sort chuẩn
-                };
+            // 2. HANDICAP
+            const handicapMatch = pick.match(/[-+]?[0-9]*\.?[0-9]+$/);
+            if (handicapMatch) {
+                const handicap = parseFloat(handicapMatch[0]);
+                const teamNames = teams.split(/\s*-\s*|\s*vs\s*/i);
                 
-                try {
-                    // Thêm học sinh mới vào Firestore
-                    const docRef = await addDoc(collection(db, "students"), studentData);
-                    // Lưu ID document để sau này update điểm
-                    setUser({ ...studentData, id: docRef.id }); 
-                    setScreen('dashboard'); 
-                } catch (e) {
-                    console.error("Login error", e);
-                    notify("Lỗi đăng nhập! Kiểm tra kết nối mạng.", "error");
+                if (teamNames.length >= 2) {
+                    const homeNameRaw = teamNames[0].trim();
+                    const awayNameRaw = teamNames[1].trim();
+                    const homeNameClean = normalizeStr(homeNameRaw);
+                    const awayNameClean = normalizeStr(awayNameRaw);
+                    const pickNamePart = pick.replace(/[-+]?[0-9]*\.?[0-9]+$/, "").trim(); 
+                    const pickNameClean = normalizeStr(pickNamePart);
+
+                    let isHome = true; 
+                    if (pickNameClean.includes(awayNameClean) || (awayNameClean.length > 3 && pickNameClean.includes(awayNameClean))) isHome = false;
+                    else if (pickNameClean.includes(homeNameClean)) isHome = true;
+                    else if (upperPick.includes("AWAY")) isHome = false;
+                    else if (upperPick.includes("HOME")) isHome = true;
+                    else if (upperPick.includes(awayNameRaw.toUpperCase())) isHome = false;
+
+                    const selectedScore = isHome ? hScore : aScore;
+                    const opponentScore = isHome ? aScore : hScore;
+                    const diff = (selectedScore + handicap) - opponentScore;
+                    
+                    if (diff > 0.2) return "WON";      
+                    if (diff < -0.2) return "LOST";     
+                    return "DRAW"; 
                 }
-            };
-
-            const updateStudentScore = async (score) => {
-                if (!user || !user.id) return;
-                try {
-                    const studentRef = doc(db, "students", user.id);
-                    await updateDoc(studentRef, { lastScore: score });
-                    notify("Đã lưu điểm lên hệ thống!", "success");
-                } catch (e) { notify("Lỗi lưu điểm!", "error"); }
-            };
-
-            const registerCourse = async (regInfo) => {
-                if (!user || !user.id) return;
-                try {
-                    const studentRef = doc(db, "students", user.id);
-                    const updateData = regInfo.courseType === 'python' ? { pythonReg: regInfo } : { scratchReg: regInfo };
-                    await updateDoc(studentRef, updateData);
-                    setShowCourseModal(false);
-                    notify("Đăng ký thành công!", "success");
-                } catch (e) { notify("Lỗi đăng ký!", "error"); }
-            };
-
-            const handleUpdateClassStructure = async (grade, className) => {
-                const updatedStructure = { ...classStructure };
-                if (!updatedStructure[grade]) updatedStructure[grade] = [];
-                if (!updatedStructure[grade].includes(className)) {
-                    updatedStructure[grade].push(className);
-                    updatedStructure[grade].sort();
-                    
-                    // Lưu lên Firestore
-                    try {
-                        await setDoc(doc(db, "config", "classes"), updatedStructure);
-                        notify(`Đã thêm lớp ${className} vào khối ${grade}`, "success");
-                    } catch (e) { notify("Lỗi lưu lớp học!", "error"); }
-                } else {
-                    notify("Lớp này đã tồn tại!", "warning");
-                }
-            };
-
-            const handleChangeAdminPassword = (newPwd) => { 
-                setAdminPassword(newPwd); 
-                localStorage.setItem('admin_pwd', newPwd); 
-                notify("Đổi mật khẩu thành công!", "success"); 
-            };
-            
-            const handleDeleteHistory = async () => { 
-                if(!confirm("CẢNH BÁO: Bạn có chắc chắn muốn xóa TOÀN BỘ dữ liệu lịch sử và điểm số của học sinh trên hệ thống Online không?\n\nHành động này KHÔNG THỂ khôi phục!")) return;
-
-                try {
-                    // Lấy toàn bộ document trong collection 'students'
-                    const studentsRef = collection(db, "students");
-                    const snapshot = await getDocs(studentsRef);
-                    
-                    if (snapshot.empty) {
-                        notify("Dữ liệu trống, không có gì để xóa.", "info");
-                        return;
-                    }
-
-                    // Tạo mảng các promise xóa
-                    const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
-                    
-                    // Chờ tất cả xóa xong
-                    await Promise.all(deletePromises);
-                    
-                    notify(`Đã xóa vĩnh viễn ${snapshot.size} bản ghi lịch sử!`, "success");
-                    setStudentList([]); // Clear local state immediately for visual feedback
-                } catch (e) {
-                    console.error("Delete error:", e);
-                    notify("Lỗi khi xóa dữ liệu: " + e.message, "error");
-                }
-            };
-
-            return (
-                <div className="font-sans antialiased text-slate-800">
-                    <NotificationToast notification={notification} onClose={() => setNotification(null)} />
-                    {screen === 'welcome' && <WelcomeScreen onLogin={handleLogin} onAdminLogin={()=>setScreen('admin')} adminPassword={adminPassword} classStructure={classStructure} notify={notify} />}
-                    {screen === 'admin' && <AdminScreen onBack={()=>setScreen('welcome')} studentList={studentList} onDeleteHistory={handleDeleteHistory} onUploadData={setQuestionData} onChangePassword={handleChangeAdminPassword} onUpdateClassStructure={handleUpdateClassStructure} classStructure={classStructure} notify={notify}/>}
-                    {screen === 'dashboard' && user && <Dashboard user={user} onSelectMode={(m)=>{setCurrentMode(m); setScreen('game')}} onLogout={()=>{setUser(null); setScreen('welcome')}} onOpenCourse={setShowCourseModal}/>}
-                    {screen === 'game' && user && <GameScreen user={user} mode={currentMode} onFinish={(r)=>{setLastResult(r); updateStudentScore(r.score); setScreen('result')}} onBack={()=>setScreen('dashboard')} questionData={questionData}/>}
-                    {screen === 'result' && <ResultScreen score={lastResult.score} total={lastResult.total} onRetry={()=>setScreen('game')} onHome={()=>setScreen('dashboard')} />}
-                    {showCourseModal && <CourseRegistrationModal courseType={showCourseModal} onClose={()=>setShowCourseModal(false)} onRegister={registerCourse} defaultGrade={user?.grade} notify={notify} />}
-                </div>
-            );
+            }
+            return "PENDING";
         };
 
-        const root = createRoot(document.getElementById('root'));
-        root.render(<App />);
+        const calculateStats = (data) => {
+            const stats = {};
+            Object.values(data).forEach(m => {
+                if (m.type === 'FREE') return; 
+                
+                let status = "PENDING";
+                if (m.overrideStatus && m.overrideStatus !== 'AUTO') {
+                    status = m.overrideStatus;
+                } else {
+                    status = calculateStatus(m.pick, m.ft, m.teams);
+                }
+
+                const my = m.monthYear || getMonthYear(m.date);
+                if(my === 'Unknown') return;
+                if (!stats[my]) stats[my] = { total: 0, won: 0, lost: 0 };
+                
+                if (status === "WON") { stats[my].won++; stats[my].total++; }
+                else if (status === "LOST") { stats[my].lost++; stats[my].total++; }
+                else if (status === "DRAW") { stats[my].total++; }
+            });
+            return stats;
+        }
+
+        // --- FIREBASE LISTENER ---
+        let allMatchesForExport = [];
+
+        onValue(ref(db, 'matches'), (snapshot) => {
+            const data = snapshot.val();
+            const listVip = document.getElementById('list-vip');
+            const listFreeContainer = document.getElementById('list-free-container');
+            const listFreeHistory = document.getElementById('list-free-history');
+            const freeTipsLoading = document.getElementById('free-tips-loading');
+            const adminTable = document.getElementById('admin-match-list');
+            const statsContainer = document.getElementById('stats-container');
+            const vipStatusMsg = document.getElementById('vip-status-msg');
+            const nextDayLoader = document.getElementById('next-day-loader');
+
+            listVip.innerHTML = ''; listFreeContainer.innerHTML = ''; listFreeHistory.innerHTML = ''; adminTable.innerHTML = ''; allMatchesForExport = [];
+
+            if (!data) {
+                listVip.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-500">No data.</td></tr>';
+                freeTipsLoading.classList.remove('hidden'); 
+                return;
+            }
+
+            let hasPendingVip = false; let hasFreeTips = false;
+            let vipMatchesCount = 0; let completedVipCount = 0;
+
+            const now = new Date();
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(now.getDate() - 7);
+
+            Object.entries(data).reverse().forEach(([key, m]) => {
+                allMatchesForExport.push(m);
+                
+                // Determine Status (Override > Auto)
+                let status = "PENDING";
+                if (m.overrideStatus && m.overrideStatus !== 'AUTO') {
+                    status = m.overrideStatus;
+                } else {
+                    status = calculateStatus(m.pick, m.ft, m.teams);
+                }
+                
+                const emailBtn = `<button onclick="window.copyEmail('${key}')" class="text-blue-500 hover:text-blue-700 ml-2" title="Copy Email"><i class="fa-solid fa-copy"></i></button>`;
+                const typeLabel = m.type === 'FREE' ? '<span class="text-green-600 font-bold bg-green-100 px-2 rounded text-xs">FREE</span>' : '<span class="text-yellow-600 font-bold bg-yellow-100 px-2 rounded text-xs">VIP</span>';
+                
+                // Admin Status Dropdown
+                const currentOverride = m.overrideStatus || 'AUTO';
+                const options = ['AUTO', 'WIN', 'LOST', 'DRAW', 'PENDING'].map(opt => `<option value="${opt}" ${currentOverride === opt ? 'selected' : ''}>${opt}</option>`).join('');
+                const statusSelect = `<select onchange="window.updateMatchOverride('${key}', this.value)" class="border p-1 rounded text-xs font-bold text-gray-700 border-gray-300 bg-white">${options}</select>`;
+
+                // Admin Row
+                adminTable.innerHTML += `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="p-3">${typeLabel}</td>
+                        <td class="p-3 font-bold text-sm text-gray-700">${m.teams}<br><span class="text-xs text-gray-400">${m.date}</span>${emailBtn}</td>
+                        <td class="p-3 text-blue-700 font-bold">${m.pick}</td>
+                        <td class="p-3"><input type="text" value="${m.ft}" onchange="window.updateScore('${key}', this.value)" class="border p-1 w-16 text-center rounded text-gray-800 font-bold"></td>
+                        <td class="p-3 text-center">${statusSelect}</td>
+                        <td class="p-3 text-center">
+                            <button onclick="window.deleteMatch('${key}')" class="text-red-500 hover:text-red-700 px-2 py-1 rounded hover:bg-red-100 transition"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+
+                if (m.type === 'FREE') {
+                    const parts = m.date.split('.'); 
+                    if (parts.length === 3) {
+                        const matchDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`); 
+                        if (matchDate >= sevenDaysAgo) {
+                            hasFreeTips = true;
+                            let statusBadge = status === 'WON' ? '<span class="badge badge-win">WIN</span>' : (status === 'LOST' ? '<span class="badge badge-lose">LOSE</span>' : (status === 'DRAW' ? '<span class="badge badge-draw">DRAW</span>' : '<span class="badge badge-pending">WAITING</span>'));
+                            
+                            if (m.date === now.toLocaleDateString('en-GB').replace(/\//g, '.')) { 
+                                 let analysisHtml = m.analysis ? `<div class="analysis-box" id="analysis-${key}"><i class="fa-solid fa-quote-left text-brand-gold mr-2"></i>${m.analysis}</div>` : '';
+                                 listFreeContainer.innerHTML += `<div class="bg-black/40 border border-gray-700 rounded-lg p-4 hover:border-gray-500 transition shadow-lg"><div class="flex justify-between items-center mb-2"><span class="text-brand-gold text-xs font-bold bg-gray-800 px-2 py-1 rounded">${m.date}</span>${statusBadge}</div><div class="flex justify-between items-center"><h3 class="font-bold text-white text-lg font-display">${m.teams}</h3><span class="bg-gray-800 text-white px-3 py-1 rounded font-mono font-bold border border-gray-600">${m.odd}</span></div><div class="mt-3 flex items-center justify-between border-t border-gray-700 pt-3"><span class="text-green-400 font-bold text-lg"><i class="fa-solid fa-crosshairs"></i> ${m.pick}</span></div>${analysisHtml}</div>`;
+                            } else {
+                                listFreeHistory.innerHTML += `<tr><td class="text-center font-bold text-gray-400">${m.date}</td><td class="text-center font-bold text-gray-200">${m.teams}</td><td class="text-center font-bold text-brand-gold">${m.pick}</td><td class="text-center font-mono">${m.ft}</td><td class="text-center">${statusBadge}</td></tr>`;
+                            }
+                        }
+                    }
+                } else {
+                    vipMatchesCount++;
+                    let badgeHtml = '', ftDisplay = m.ft, pickDisplay = m.pick, oddDisplay = m.odd;
+                    if (status === 'WON') { badgeHtml = `<span class="badge badge-win">WIN</span>`; completedVipCount++; } 
+                    else if (status === 'LOST') { badgeHtml = `<span class="badge badge-lose">LOSE</span>`; completedVipCount++; } 
+                    else if (status === 'DRAW') { badgeHtml = `<span class="badge badge-draw">DRAW</span>`; completedVipCount++; }
+                    else {
+                        hasPendingVip = true; badgeHtml = `<span class="badge badge-pending">WAITING</span>`;
+                        pickDisplay = `<span class="text-gray-500 italic"><i class="fa-solid fa-lock"></i> Hidden</span>`;
+                        oddDisplay = `<span class="text-gray-500">-</span>`; ftDisplay = `<span class="text-xs text-gray-500">Upcoming</span>`;
+                    }
+                    listVip.innerHTML += `<tr class="border-b border-gray-800"><td class="text-center font-bold text-gray-400">${m.date}</td><td class="text-center font-bold text-gray-200">${m.teams}</td><td class="text-center font-bold text-brand-gold">${pickDisplay}</td><td class="text-center font-bold">${oddDisplay}</td><td class="text-center font-mono">${ftDisplay}</td><td class="text-center">${badgeHtml}</td></tr>`;
+                }
+            });
+
+            if (!hasFreeTips) {
+                 freeTipsLoading.classList.remove('hidden');
+                 listFreeContainer.innerHTML = `
+                    <div class="bg-black/40 border border-gray-700 rounded-lg p-4 shadow-lg opacity-50 relative pointer-events-none mb-4">
+                        <div class="absolute inset-0 flex items-center justify-center bg-black/50 text-brand-gold font-bold">SAMPLE FREE TIP</div>
+                        <div class="flex justify-between items-center mb-2"><span class="text-brand-gold text-xs font-bold bg-gray-800 px-2 py-1 rounded">Today</span><span class="badge badge-win">WIN</span></div>
+                        <div class="flex justify-between items-center"><h3 class="font-bold text-white text-lg font-display">Example Team vs Example Team</h3><span class="bg-gray-800 text-white px-3 py-1 rounded font-mono font-bold border border-gray-600">1.90</span></div>
+                        <div class="mt-3 flex items-center gap-2 mb-3"><span class="text-green-400 font-bold text-lg"><i class="fa-solid fa-crosshairs"></i> OVER 2.5</span></div>
+                        <div class="analysis-box" style="display:block"><p class="text-gray-300 text-sm">Expert analysis will appear here...</p></div>
+                    </div>
+                `;
+            } else {
+                 freeTipsLoading.classList.add('hidden');
+            }
+
+            vipStatusMsg.classList.toggle('hidden', hasPendingVip);
+            if (vipMatchesCount > 0 && vipMatchesCount === completedVipCount) nextDayLoader.style.display = 'block'; else nextDayLoader.style.display = 'none';
+
+            const stats = calculateStats(data);
+            if(Object.keys(stats).length > 0) {
+                let html = `<table class="w-full text-left border rounded overflow-hidden"><thead class="bg-gray-200 text-gray-800"><tr><th class="p-3">Month</th><th class="p-3 text-center">Total</th><th class="p-3 text-center text-green-700">Won</th><th class="p-3 text-center text-red-700">Lost</th><th class="p-3 text-center">Win Rate</th></tr></thead><tbody>`;
+                Object.keys(stats).sort((a,b) => { const [mA, yA] = a.split('/').map(Number); const [mB, yB] = b.split('/').map(Number); return yB !== yA ? yB - yA : mB - mA; }).forEach(my => {
+                    const s = stats[my]; const wr = s.total > 0 ? ((s.won/s.total)*100).toFixed(1) : 0;
+                    html += `<tr class="border-b hover:bg-gray-50"><td class="p-3 font-bold text-gray-700">${my}</td><td class="p-3 text-center text-gray-800">${s.total}</td><td class="p-3 text-center text-green-600 font-bold bg-green-50">${s.won}</td><td class="p-3 text-center text-red-600 font-bold bg-red-50">${s.lost}</td><td class="p-3 text-center font-bold text-blue-800">${wr}%</td></tr>`;
+                });
+                html += `</tbody></table>`;
+                statsContainer.innerHTML = html;
+            }
+        });
+
+        // FEATURED TIP LISTENER
+        onValue(ref(db, 'featuredTip'), (snapshot) => {
+            const feat = snapshot.val();
+            const card = document.getElementById('featured-tip');
+            if(feat) {
+                document.getElementById('featured-date').innerText = feat.date;
+                document.getElementById('featured-league').innerText = feat.league;
+                document.getElementById('featured-home').innerText = feat.home;
+                document.getElementById('featured-away').innerText = feat.away;
+                document.getElementById('featured-time').innerText = feat.time;
+                document.getElementById('featured-odd').innerText = feat.odd;
+                card.classList.remove('hidden');
+            } else {
+                card.classList.add('hidden'); // Fixed: Hide if cleared
+            }
+        });
+
+        // STATUS UPDATE
+        onValue(ref(db, 'settings/status'), (snapshot) => {
+            const statusText = snapshot.val(); const displayEl = document.getElementById('daily-status-display');
+            if(statusText) displayEl.innerHTML = `<i class="fa-solid fa-clock mr-1"></i> ${statusText}`;
+        });
+
+        // USER LISTENER
+        onValue(ref(db, 'users'), (snap) => {
+            const data = snap.val(); const list = document.getElementById('admin-user-list'); list.innerHTML = '';
+            if(data) Object.values(data).reverse().forEach(u => list.innerHTML += `<tr class="border-b hover:bg-gray-50"><td class="p-3 font-bold text-blue-900">${u.email}</td><td class="p-3 font-bold text-gray-700">${u.plan}</td><td class="p-3 font-bold text-gray-500">${u.method || 'PayPal'}</td><td class="p-3 text-gray-500">${u.date}</td><td class="p-3"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold">Active</span></td></tr>`);
+            else list.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500">No users yet.</td></tr>';
+        });
+
+        // GLOBAL FUNCTIONS
+        window.updateFeaturedTip = (e) => {
+            e.preventDefault();
+            const data = {
+                date: document.getElementById('featDate').value,
+                league: document.getElementById('featLeague').value,
+                home: document.getElementById('featHome').value,
+                away: document.getElementById('featAway').value,
+                time: document.getElementById('featTime').value,
+                odd: document.getElementById('featOdd').value
+            };
+            set(ref(db, 'featuredTip'), data).then(() => Swal.fire('Success', 'Featured Tip Updated!', 'success'));
+        };
+        
+        window.clearFeaturedTip = () => {
+             Swal.fire({
+                title: 'Hide Super Tip?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, hide it'
+             }).then((result) => {
+                 if(result.isConfirmed) {
+                     remove(ref(db, 'featuredTip')).then(() => Swal.fire('Hidden', 'Super Tip hidden.', 'success'));
+                 }
+             });
+        };
+
+        window.copyEmail = (key) => {
+            getDatabase(app); const matchRef = ref(db, `matches/${key}`);
+            onValue(matchRef, (snapshot) => {
+                const m = snapshot.val(); if(!m) return;
+                const now = new Date();
+                const template = `Subject: 🔥 VIP TIP ${m.date} - ${m.teams}\n\nWINTIPS PREMIUM SERVICE 👑\n--------------------------------------------------\n📅 Date Sent: ${now.toLocaleDateString()}\n⏰ Time Sent: ${now.toLocaleTimeString()}\n--------------------------------------------------\n\n⚽ MATCH: ${m.teams}\n⏰ Kick-off Date: ${m.date}\n\n🔥 OUR PREDICTION (PICK):\n👉 ${m.pick}\n💰 ODDS: ${m.odd}\n\n--------------------------------------------------\n💡 INVESTMENT STRATEGY:\n- Stake: Flat Stake (3-5% of Bankroll)\n- Confidence: ⭐⭐⭐⭐⭐\n\n--------------------------------------------------\n*Thank you for trusting WINTIPS.*`;
+                navigator.clipboard.writeText(template).then(() => Swal.fire({icon: 'success', title: 'Email Copied!', text: 'Paste it into Gmail (Ctrl+V)', timer: 1500, showConfirmButton: false}));
+            }, { onlyOnce: true });
+        };
+
+        window.updateStatus = () => { const text = document.getElementById('statusInput').value; set(ref(db, 'settings/status'), text).then(() => Swal.fire('Updated', 'Status text updated!', 'success')); };
+        window.exportTipsPDF = () => { /* Export logic */ };
+        window.resetAllData = () => { Swal.fire({ title: 'Reset All?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Yes' }).then((r) => { if (r.isConfirmed) remove(ref(db, 'matches')); }) };
+        window.handleAddMatch = (e) => { e.preventDefault(); const d = document.getElementById('matchDate').value; push(ref(db, 'matches'), { date: d, teams: document.getElementById('matchTeams').value, pick: document.getElementById('matchPick').value, odd: document.getElementById('matchOdd').value, ft: "?-?", monthYear: getMonthYear(d), type: document.getElementById('matchType').value, analysis: document.getElementById('matchAnalysis').value }).then(() => Swal.fire({icon:'success', title:'Saved', timer:1000, showConfirmButton:false})); e.target.reset(); };
+        window.handleUploadCSV = () => { const fi = document.getElementById('csvFileInput'); if (!fi.files.length) return; const r = new FileReader(); r.onload = (e) => { let t = e.target.result; if (t.charCodeAt(0) === 0xFEFF) t = t.slice(1); const rows = t.split('\n').filter(x => x.trim() !== ''); const updates = {}; let c = 0; rows.slice(1).forEach(row => { let cols = row.split(',').map(x => x.trim()); if (cols.length >= 5) { const [date, teams, pick, odd, type, analysis] = cols; if(date && teams) { const k = push(ref(db, 'matches')).key; updates[`/matches/${k}`] = { date, teams, pick, odd, ft: "?-?", monthYear: getMonthYear(date), type: type || "VIP", analysis: analysis || "" }; c++; } } }); if(c > 0) update(ref(db), updates).then(() => { Swal.fire('Success', `Uploaded ${c}`, 'success'); fi.value=''; }); }; r.readAsText(fi.files[0]); };
+        window.downloadSampleCSV = () => { const c = "DATE,MATCH,PICK,ODD,TYPE,ANALYSIS\n01.12.2025,Man Utd - Chelsea,OVER 2.5,1.90,VIP,\n01.12.2025,Arsenal - Liverpool,UNDER 3.5,1.85,FREE,Strong defense"; const b = new Blob([c], {type: 'text/csv;charset=utf-8;'}); const l = document.createElement("a"); l.href = URL.createObjectURL(b); l.download = "sample.csv"; l.click(); };
+        window.updateScore = (k, v) => update(ref(db, `matches/${k}`), {ft: v});
+        
+        window.openAdminLogin = () => Swal.fire({title: 'Password', input: 'password'}).then((r) => { if(r.value === 'admin123') { document.getElementById('user-view').style.display='none'; document.getElementById('admin-panel').style.display='block'; window.switchAdminTab('data'); } });
+        window.logoutAdmin = () => { document.getElementById('admin-panel').style.display='none'; document.getElementById('user-view').style.display='block'; };
+        window.switchAdminTab = (t) => { ['data', 'report', 'users'].forEach(x => { document.getElementById(`tab-${x}`).classList.toggle('hidden-panel', x !== t); document.getElementById(`tab-btn-${x}`).classList.toggle('bg-gray-900', x !== t); document.getElementById(`tab-btn-${x}`).classList.toggle('bg-gray-700', x === t); }); };
+        
+        // PAYMENT
+        let currentPlanName = '', currentPlanPrice = 0;
+        window.openPaymentModal = (n, p) => {
+            currentPlanName = n; currentPlanPrice = p;
+            document.getElementById('modal-plan-name').innerText = n;
+            document.getElementById('modal-plan-price').innerText = `$${p}`;
+            document.getElementById('binance-amount').innerText = p;
+            document.getElementById('payment-modal').classList.remove('hidden');
+            window.switchPaymentMethod('paypal');
+        };
+
+        window.switchPaymentMethod = (method) => {
+            const paypalBtn = document.getElementById('btn-method-paypal');
+            const binanceBtn = document.getElementById('btn-method-binance');
+            const paypalCont = document.getElementById('paypal-button-container');
+            const binanceCont = document.getElementById('binance-payment-container');
+
+            if (method === 'paypal') {
+                paypalBtn.className = "flex-1 py-2 rounded font-bold border border-blue-500 bg-blue-100 text-blue-700 transition";
+                binanceBtn.className = "flex-1 py-2 rounded font-bold border border-gray-300 bg-gray-50 text-gray-600 transition";
+                paypalCont.classList.remove('hidden');
+                binanceCont.classList.add('hidden');
+                
+                if(paypalCont.innerHTML === '') {
+                    if (window.paypal) {
+                        paypal.Buttons({
+                            createOrder: (d, a) => { return a.order.create({ purchase_units: [{ amount: { value: currentPlanPrice } }] }); },
+                            onApprove: (d, a) => a.order.capture().then(() => {
+                                const e = document.getElementById('buyer-email').value;
+                                push(ref(db, 'users'), {email: e, plan: currentPlanName, method: 'PayPal', date: new Date().toLocaleDateString()});
+                                window.closePaymentModal();
+                                Swal.fire('Success', 'VIP Activated via PayPal!', 'success');
+                            }),
+                            onError: (err) => { Swal.fire('Error', 'Payment failed.', 'error'); }
+                        }).render('#paypal-button-container');
+                    }
+                }
+            } else {
+                binanceBtn.className = "flex-1 py-2 rounded font-bold border border-yellow-500 bg-yellow-100 text-yellow-700 transition";
+                paypalBtn.className = "flex-1 py-2 rounded font-bold border border-gray-300 bg-gray-50 text-gray-600 transition";
+                paypalCont.classList.add('hidden');
+                binanceCont.classList.remove('hidden');
+            }
+        };
+
+        window.handleBinancePayment = () => {
+            const email = document.getElementById('buyer-email').value;
+            if(!email || !email.includes('@')) { Swal.fire('Error', 'Please enter a valid email address first.', 'warning'); return; }
+            push(ref(db, 'users'), { email: email, plan: currentPlanName, method: 'Binance (Manual)', date: new Date().toLocaleDateString() });
+            window.closePaymentModal();
+            Swal.fire({ icon: 'success', title: 'Transfer Recorded!', text: 'We will verify your transfer and activate VIP shortly.', confirmButtonColor: '#F0B90B' });
+        };
+        window.closePaymentModal = () => document.getElementById('payment-modal').classList.add('hidden');
     </script>
 </body>
 </html>
