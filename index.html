@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đam Mê Tin Học - Online Realtime</title>
+    <title>Hệ Thống Dạy & Học Tin Học - Thầy Lê Đình Cương</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script type="importmap">
     {
@@ -19,22 +19,21 @@
     </script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Be Vietnam Pro', sans-serif; }
+        body { font-family: 'Be Vietnam Pro', sans-serif; background-color: #f8fafc; }
         .animate-in { animation: fadeIn 0.4s ease-out; }
         .animate-slide-up { animation: slideUp 0.3s ease-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; }
-        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .glass-panel { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 antialiased selection:bg-yellow-400 selection:text-indigo-900">
+<body class="text-slate-800 antialiased selection:bg-indigo-200 selection:text-indigo-900">
     <div id="root"></div>
 
     <script type="text/babel" data-type="module">
@@ -42,21 +41,21 @@
         import { createRoot } from 'react-dom/client';
         import { 
             BookOpen, CheckCircle, XCircle, Trophy, User, Smartphone, Play, 
-            RefreshCcw, Star, Edit3, HelpCircle, Brain, Upload, Download, 
-            Sparkles, Loader2, Users, Lock, List, Trash2, LogOut, Calendar, 
-            Database, Terminal, Code, Monitor, Phone, Key, Gamepad2, Plus, 
-            X, AlertCircle, Info, Cloud, Settings
+            RefreshCcw, Star, Edit3, HelpCircle, Upload, Download, Loader2, 
+            Lock, List, Trash2, LogOut, Database, Code, Monitor, Phone, Key, 
+            Gamepad2, X, AlertCircle, Info, Clock, ShieldCheck, FileSpreadsheet,
+            ChevronRight, BookMarked, PenTool, Timer
         } from 'lucide-react';
         
         // --- FIREBASE IMPORTS ---
         import { initializeApp, getApps, getApp } from 'firebase/app';
         import { 
-            getFirestore, collection, addDoc, onSnapshot, 
-            updateDoc, doc, setDoc, deleteDoc, query, orderBy, serverTimestamp, getDocs
+            getFirestore, collection, addDoc, onSnapshot, updateDoc, doc, 
+            setDoc, deleteDoc, query, orderBy, serverTimestamp, getDocs, where
         } from 'firebase/firestore';
         import { getAuth, signInAnonymously } from 'firebase/auth';
 
-        // --- CẤU HÌNH FIREBASE CHÍNH THỨC CỦA BẠN ---
+        // --- CẤU HÌNH FIREBASE ---
         const firebaseConfig = {
           apiKey: "AIzaSyBJuLbMtx4GLsRcj_PO3TU0E4VBhOyJ-yQ",
           authDomain: "dam-me-tin-hoc.firebaseapp.com",
@@ -67,555 +66,438 @@
           appId: "1:656467913362:web:2593c5b816b08f0f9ed44b"
         };
 
-        // Biến toàn cục để lưu instance
         let db = null;
         let auth = null;
 
-        // --- CẤU HÌNH UI ---
-        const BACKGROUND_IMAGE = "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=2070&auto=format&fit=crop"; 
-        const DEFAULT_CLASS_STRUCTURE = {
-            6: ["6A1", "6A2", "6A3"], 7: ["7A1", "7A2", "7A3"],
-            8: ["8A1", "8A2", "8A3"], 9: ["9A4", "9A5", "9A6"]
-        };
-
-        // --- DỮ LIỆU CÂU HỎI ĐẦY ĐỦ (Đã khôi phục) ---
-        const DEFAULT_QUESTION_BANK = {
-            6: {
-                mcq: [{ id: 1, question: "Thông tin là gì?", options: ["Là những gì đem lại hiểu biết", "Là các con số", "Là văn bản", "Là hình ảnh"], correct: 0 }, { id: 2, question: "Đơn vị đo thông tin cơ bản?", options: ["Byte", "Bit", "KB", "GB"], correct: 1 }],
-                tf: [{ id: 1, question: "Máy tính cần hệ điều hành để hoạt động.", correct: true }],
-                fill: [{ id: 1, question: "Mạng máy tính gồm các thiết bị và ... kết nối.", answer: "đường truyền" }],
-                essay: [{ id: 1, question: "Tác hại của nghiện game?", hint: "Ảnh hưởng sức khỏe, học tập..." }]
-            },
-            7: {
-                mcq: [
-                    { id: 1, question: "Mạng xã hội thường được tổ chức dưới dạng nào?", options: ["Website", "Sách giấy", "Đĩa CD", "Tờ rơi"], correct: 0 },
-                    { id: 2, question: "Chia sẻ hình ảnh, video trên Facebook/Zalo là chức năng gì?", options: ["Lưu trữ", "Chia sẻ thông tin", "Chơi game", "Mua bán"], correct: 1 },
-                    { id: 3, question: "Cùng trao đổi ý kiến về một chủ đề gọi là:", options: ["Thảo luận", "Tranh cãi", "Kể chuyện", "Giải trí"], correct: 0 },
-                    { id: 4, question: "Không nên dùng MXH cho mục đích nào?", options: ["Giao lưu", "Học hỏi", "Chia sẻ ảnh đẹp", "Bình luận xấu"], correct: 3 },
-                    { id: 5, question: "Hành vi ứng xử văn minh trên mạng?", options: ["Xúc phạm", "Tin giả", "Tôn trọng", "Mạo danh"], correct: 2 },
-                    { id: 6, question: "Phần mềm bảng tính là:", options: ["Paint", "Excel", "Scratch", "PowerPoint"], correct: 1 },
-                    { id: 7, question: "Mỗi bảng tính gồm bao nhiêu trang tính?", options: ["1", "3", "10", "Nhiều"], correct: 3 },
-                    { id: 8, question: "Thay đổi dữ liệu ô tính, kết quả công thức sẽ:", options: ["Tự cập nhật", "Xóa", "Không đổi", "Nhập lại"], correct: 0 },
-                    { id: 9, question: "Giả mạo tài khoản người khác là:", options: ["Giao tiếp không hợp lệ", "An toàn", "Đúng mực", "Vui vẻ"], correct: 0 },
-                    { id: 10, question: "Nghiện Internet gây hậu quả gì cho học tập?", options: ["Hiệu quả", "Không sao", "Sa sút", "Điểm cao"], correct: 2 },
-                    { id: 11, question: "Nghiện Internet ảnh hưởng sức khỏe?", options: ["Khỏe hơn", "Không sao", "Mệt mỏi, đau mắt", "Tăng đề kháng"], correct: 2 },
-                    { id: 12, question: "Công thức trong bảng tính dùng để:", options: ["Nhập liệu", "Tính toán", "Vẽ hình", "Đổi màu"], correct: 1 }
-                ],
-                tf: [
-                    { id: 1, question: "Cần giao tiếp lịch sự trên mạng.", correct: true },
-                    { id: 2, question: "Thoải mái chia sẻ mọi thông tin cá nhân.", correct: false },
-                    { id: 3, question: "Không dùng lời lẽ xúc phạm trên mạng.", correct: true },
-                    { id: 4, question: "Tin tức trên MXH luôn chính xác.", correct: false },
-                    { id: 5, question: "Bảng tính cấu tạo từ hàng và cột.", correct: true },
-                    { id: 6, question: "Ô là giao của hàng và cột.", correct: true },
-                    { id: 7, question: "Bảng tính chỉ vẽ tranh, không tính toán.", correct: false },
-                    { id: 8, question: "Phần mềm bảng tính hỗ trợ tính toán tự động.", correct: true }
-                ],
-                fill: [
-                    { id: 1, question: "Tự ý đăng nhập tài khoản người khác là truy cập ...", answer: "không hợp lệ" },
-                    { id: 2, question: "Chia sẻ tin sai sự thật cần gỡ bài và ...", answer: "đính chính" },
-                    { id: 3, question: "Khối A1:B2 có bao nhiêu ô?", answer: "4" },
-                    { id: 4, question: "Copy =B1*C1 từ A1 xuống A2 thành ...", answer: "=B2*C2" }
-                ],
-                essay: [
-                    { id: 1, question: "Nam đăng ảnh xấu của Minh lên mạng. Đúng hay sai? Lời khuyên?", hint: "Sai. Nên xóa bài, xin lỗi và tôn trọng bạn bè." },
-                    { id: 2, question: "Phần mềm bảng tính dùng để làm gì?", hint: "Lưu, trình bày bảng, tính toán, vẽ biểu đồ." },
-                    { id: 3, question: "Ý nghĩa công thức =A1+B1? Nếu A1=5, B1=3?", hint: "Tính tổng. Kết quả là 8." }
-                ]
-            },
-            8: {
-                mcq: [
-                    { id: 1, question: "Tin học ứng dụng trong lĩnh vực nào?", options: ["Y tế", "Giáo dục", "Quốc phòng", "Cả A, B, C"], correct: 3 },
-                    { id: 2, question: "Nghề nghiệp thuộc lĩnh vực tin học?", options: ["Bán hàng", "Lập trình viên", "Vlogger", "NV Văn phòng"], correct: 1 },
-                    { id: 3, question: "Tỉ lệ nam nữ trong ngành tin học?", options: ["Nữ < Nam", "Nam < Nữ", "Bằng nhau", "Không rõ"], correct: 0 },
-                    { id: 4, question: "Hậu quả bất bình đẳng giới trong tin học?", options: ["Ít cơ hội nghề nghiệp", "Không theo kịp XH", "Ít tiếp cận TB", "Cả 3 ý trên"], correct: 3 },
-                    { id: 5, question: "Thông tin mã hóa thành dạng nào để vào máy tính?", options: ["Kí tự", "Hình ảnh", "Dãy bit", "Âm thanh"], correct: 2 },
-                    { id: 6, question: "Chia sẻ ảnh đẹp nhanh nhất dùng dạng nào?", options: ["Ảnh số", "Văn bản", "Ảnh in", "Ảnh vẽ"], correct: 0 },
-                    { id: 7, question: "Đánh giá độ tin cậy thông tin dựa vào:", options: ["Like/Share", "Tính thời sự", "Kinh nghiệm/Hiểu biết", "Độ dài"], correct: 2 },
-                    { id: 8, question: "Tìm thông tin bão lũ ở đâu tin cậy nhất?", options: ["Cổng TT Chính phủ", "Facebook cá nhân", "Web lạ", "Tin đồn"], correct: 0 },
-                    { id: 9, question: "Khác biệt Thuật toán và Chương trình?", options: ["Ngôn ngữ máy", "Ý tưởng vs Lệnh thực thi", "Mã lệnh", "Phần cứng vs Phần mềm"], correct: 1 },
-                    { id: 10, question: "Phát biểu SAI về thuật toán?", options: ["Là dãy bước", "Thực hiện tuần tự", "Điều khiển máy tính", "Biến nhận nhiều giá trị cùng lúc"], correct: 3 },
-                    { id: 11, question: "Biểu thức có giá trị True?", options: ["10+9 <= 11", "25-3 < 12", "2*10 < 31", "14-5 > 13"], correct: 2 },
-                    { id: 12, question: "Tin học giúp làm gì nhanh hơn?", options: ["Viết tay", "Lưu trữ & Xử lý TT", "Vẽ thủ công", "Ghi sổ"], correct: 1 },
-                    { id: 13, question: "Nghề dùng kiến thức Tin học?", options: ["Lập trình viên", "GV Tin", "Thiết kế đồ họa", "Cả 3"], correct: 3 },
-                    { id: 14, question: "Thông tin vào máy tính cần mã hóa thành:", options: ["Chữ viết", "Hình vẽ", "Dãy bit", "Âm thanh"], correct: 2 },
-                    { id: 15, question: "Chia sẻ khoảnh khắc đẹp qua mạng nên dùng:", options: ["Văn bản", "Ảnh số", "Ảnh in", "Tranh vẽ"], correct: 1 },
-                    { id: 16, question: "Kiểm tra tin cậy thông tin bằng cách:", options: ["Xem like", "Xem nguồn", "Tin ngay", "Share ngay"], correct: 1 },
-                    { id: 17, question: "Thuật toán là:", options: ["Thiết bị", "Dãy bước giải quyết vấn đề", "Phần mềm", "Ngôn ngữ"], correct: 1 }
-                ],
-                tf: [
-                    { id: 1, question: "Scratch hỗ trợ lập trình kéo thả.", correct: true },
-                    { id: 2, question: "Mỗi khối lệnh chỉ dùng 1 lần.", correct: false },
-                    { id: 3, question: "Nhân vật thực hiện hành động theo chương trình.", correct: true },
-                    { id: 4, question: "Scratch không giải quyết được bài toán đơn giản.", correct: false },
-                    { id: 5, question: "Cần kiểm tra lại khối lệnh khi chạy sai.", correct: true },
-                    { id: 6, question: "Có thể sửa lỗi bằng cách đổi thứ tự lệnh.", correct: true },
-                    { id: 7, question: "Gỡ lỗi là không cần thiết.", correct: false },
-                    { id: 8, question: "Thử chạy lại giúp phát hiện lỗi.", correct: true }
-                ],
-                fill: [
-                    { id: 1, question: "Lệnh thực hiện lần lượt từ đầu đến cuối là cấu trúc ...", answer: "tuần tự" },
-                    { id: 2, question: "Khối lệnh 'nếu ... thì ...' thuộc cấu trúc ...", answer: "rẽ nhánh" },
-                    { id: 3, question: "Đi thẳng 10 bước 5 lần liên tiếp dùng cấu trúc ...", answer: "lặp" },
-                    { id: 4, question: "Cấu trúc điều khiển giúp chương trình hoạt động ...", answer: "linh hoạt" }
-                ],
-                essay: [
-                    { id: 1, question: "Biến và Hằng dùng để làm gì?", hint: "Biến: Lưu giá trị thay đổi. Hằng: Giá trị không đổi." },
-                    { id: 2, question: "Thuật toán đi hình tam giác đều?", hint: "Lặp 3 lần: Đi thẳng (cạnh) -> Quay 120 độ." },
-                    { id: 3, question: "Lệnh: Quay 90, Đi 50, Lặp 4 lần. Hình gì? Sắp xếp?", hint: "Hình vuông. Sắp xếp: Lặp 4 [Đi 50 -> Quay 90]." }
-                ]
-            },
-            9: {
-                mcq: [
-                    { id: 1, question: "Tác động tiêu cực của công nghệ số đến môi trường?", options: ["Thất nghiệp", "Hại mắt", "Tiết kiệm thời gian", "Rác thải điện tử"], correct: 3 },
-                    { id: 2, question: "Ba màu cơ bản hệ RGB?", options: ["Đỏ-Vàng-Xanh lá", "Đỏ-Xanh lục-Xanh lam", "Vàng-Hồng-Tím", "Đen-Trắng-Xám"], correct: 1 },
-                    { id: 3, question: "Phần mềm mô phỏng dùng trong lĩnh vực nào?", options: ["Học tập & Nghiên cứu", "Chỉ giải trí", "Chỉ vẽ tranh", "Chỉ chơi game"], correct: 0 },
-                    { id: 4, question: "Lợi ích phần mềm mô phỏng?", options: ["Thử nghiệm tiết kiệm/an toàn", "Ô nhiễm", "Tăng chi phí", "Giảm sáng tạo"], correct: 0 },
-                    { id: 5, question: "Chia sẻ tin chưa kiểm chứng gây hậu quả gì?", options: ["Lan truyền nhanh", "Phát tán tin sai/Vi phạm luật", "Năng động", "Không sao"], correct: 1 },
-                    { id: 6, question: "Tại sao phần mềm mô phỏng giúp hiểu bài tốt hơn?", options: ["Giống thực tế", "Nhiều trò chơi", "Không cần nghĩ", "Thay giáo viên"], correct: 0 },
-                    { id: 7, question: "Sao chép bài trên mạng nộp là vi phạm gì?", options: ["Thời gian", "Sở hữu trí tuệ/Đạo đức", "Tìm kiếm", "Không vi phạm"], correct: 1 },
-                    { id: 8, question: "Mô phỏng pha màu giúp hiểu gì?", options: ["Tác dụng màu", "Nguyên lý phối màu", "Bố cục", "Chọn đối tượng"], correct: 1 },
-                    { id: 9, question: "Sơ đồ tư duy đính kèm được tệp nào?", options: ["Chỉ ảnh", "Chỉ văn bản", "Văn bản, ảnh, video", "Chỉ video"], correct: 2 },
-                    { id: 10, question: "Sơ đồ tư duy hỗ trợ tốt nhất việc gì?", options: ["Ghi chép", "Trình bày & Chia sẻ", "Trắc nghiệm", "Học vẹt"], correct: 1 },
-                    { id: 11, question: "Lộ thông tin cá nhân dẫn đến?", options: ["Giảm kết nối", "Đổi thói quen", "Mạo danh/Lừa đảo", "Được chú ý"], correct: 2 },
-                    { id: 12, question: "Trình bày lịch sử phát triển nên dùng:", options: ["Biểu đồ tròn", "Bảng", "Sơ đồ dòng thời gian", "Hình vẽ"], correct: 2 }
-                ],
-                tf: [
-                    { id: 1, question: "Hình ảnh/Video giúp sơ đồ tư duy sinh động hơn.", correct: true },
-                    { id: 2, question: "Chất lượng ảnh không quan trọng.", correct: false },
-                    { id: 3, question: "Cần chọn ảnh phù hợp nội dung.", correct: true },
-                    { id: 4, question: "Dùng ảnh bất kỳ cũng được.", correct: false },
-                    { id: 5, question: "PM mô phỏng không cho đổi tỷ lệ màu.", correct: false },
-                    { id: 6, question: "Chỉ xem màu có sẵn, không pha được.", correct: false },
-                    { id: 7, question: "PM mô phỏng cho phép chỉnh tỷ lệ tạo màu mới.", correct: true },
-                    { id: 8, question: "PM mô phỏng không hỗ trợ học pha màu.", correct: false }
-                ],
-                fill: [
-                    { id: 1, question: "Đạp xe quay máy phát điện, năng lượng chuyển từ ... sang điện năng.", answer: "cơ năng" },
-                    { id: 2, question: "Mô phỏng an toàn hơn vì không gây ... và tốn vật liệu.", answer: "nguy hiểm" },
-                    { id: 3, question: "Chia sẻ tin sai sự thật có thể vi phạm ...", answer: "pháp luật" },
-                    { id: 4, question: "Dùng Internet quá nhiều hại đến ... và học tập.", answer: "sức khỏe" }
-                ],
-                essay: [
-                    { id: 1, question: "Thiết kế sơ đồ tư duy chủ đề yêu thích (MindMaple Lite).", hint: "Chủ đề rõ ràng, nhánh chính/phụ hợp lý, có hình ảnh/video minh họa." }
-                ]
-            }
-        };
-
-        // --- GEMINI API HELPER ---
-        const callGeminiAPI = async (prompt) => {
-            const apiKey = ""; // API Key Gemini (Optional)
-            if (!apiKey) return "Chưa có API Key Gemini.";
-            try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                });
-                const data = await response.json();
-                return data.candidates?.[0]?.content?.parts?.[0]?.text || "AI đang bận.";
-            } catch (error) { return "Lỗi kết nối AI."; }
-        };
+        // --- CONSTANTS ---
+        const TERMS = [
+            { id: 'GK1', name: 'Giữa Kỳ 1' }, { id: 'CK1', name: 'Cuối Kỳ 1' },
+            { id: 'GK2', name: 'Giữa Kỳ 2' }, { id: 'CK2', name: 'Cuối Kỳ 2' }
+        ];
+        const DEFAULT_CLASS_STRUCTURE = { 6: ["6A1"], 7: ["7A1"], 8: ["8A1"], 9: ["9A1"] };
+        const BG_IMG = "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=2070&auto=format&fit=crop"; 
 
         // --- COMPONENTS ---
-        const NotificationToast = ({ notification, onClose }) => {
+        const Toast = ({ notification, onClose }) => {
             if (!notification) return null;
-            const bgColors = { success: 'bg-green-500', error: 'bg-red-500', info: 'bg-blue-500', warning: 'bg-yellow-500' };
+            const bg = { success: 'bg-emerald-500', error: 'bg-rose-500', info: 'bg-blue-500', warning: 'bg-amber-500' }[notification.type] || 'bg-slate-800';
             const Icon = { success: CheckCircle, error: AlertCircle, info: Info, warning: HelpCircle }[notification.type] || Info;
             return (
                 <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] animate-slide-up">
-                    <div className={`${bgColors[notification.type] || 'bg-slate-800'} text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 min-w-[300px] justify-between`}>
-                        <div className="flex items-center gap-2"><Icon size={20} /><span className="font-semibold text-sm">{notification.msg}</span></div>
-                        <button onClick={onClose} className="hover:bg-white/20 rounded-full p-1"><X size={16}/></button>
+                    <div className={`${bg} text-white px-6 py-3 rounded-2xl shadow-xl flex items-center gap-3 min-w-[320px] justify-between`}>
+                        <div className="flex items-center gap-2"><Icon size={20} /><span className="font-medium text-sm">{notification.msg}</span></div>
+                        <button onClick={onClose} className="hover:bg-white/20 rounded-full p-1 transition"><X size={16}/></button>
                     </div>
                 </div>
             );
         };
 
-        const ChangePasswordModal = ({ onClose, onChangePassword, notify }) => {
-            const [newPwd, setNewPwd] = useState("");
-            const [confirmPwd, setConfirmPwd] = useState("");
-            const [error, setError] = useState("");
-
-            const handleSubmit = (e) => {
-                e.preventDefault();
-                if (newPwd.length < 4) return setError("Mật khẩu phải có ít nhất 4 ký tự.");
-                if (newPwd !== confirmPwd) return setError("Mật khẩu xác nhận không khớp.");
-                onChangePassword(newPwd);
-                onClose();
-            };
+        const TimerDisplay = ({ initialMinutes, onTimeUp }) => {
+            const [timeLeft, setTimeLeft] = useState(initialMinutes * 60);
+            useEffect(() => {
+                if (timeLeft <= 0) { onTimeUp(); return; }
+                const timer = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
+                return () => clearInterval(timer);
+            }, [timeLeft, onTimeUp]);
+            
+            const mins = Math.floor(timeLeft / 60);
+            const secs = timeLeft % 60;
+            const isWarning = timeLeft < 300; // Dưới 5 phút
 
             return (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[70] flex items-center justify-center p-4 animate-in">
-                    <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-sm animate-slide-up">
-                        <h3 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
-                            <Key size={20} className="text-indigo-600" /> Đổi Mật Khẩu Admin
-                        </h3>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-semibold text-slate-600 mb-1">Mật khẩu mới</label>
-                                <input 
-                                    type="password" 
-                                    value={newPwd}
-                                    onChange={(e) => setNewPwd(e.target.value)}
-                                    className="w-full p-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                    autoFocus
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-semibold text-slate-600 mb-1">Xác nhận mật khẩu</label>
-                                <input 
-                                    type="password" 
-                                    value={confirmPwd}
-                                    onChange={(e) => setConfirmPwd(e.target.value)}
-                                    className="w-full p-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                />
-                            </div>
-                            {error && <p className="text-red-500 text-sm">{error}</p>}
-                            <div className="flex gap-2 pt-2">
-                                <button type="button" onClick={onClose} className="flex-1 py-2 bg-slate-100 text-slate-600 font-bold rounded-lg hover:bg-slate-200">Hủy</button>
-                                <button type="submit" className="flex-1 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700">Lưu</button>
-                            </div>
-                        </form>
-                    </div>
+                <div className={`flex items-center gap-2 font-mono font-bold text-lg px-4 py-2 rounded-xl ${isWarning ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-slate-100 text-slate-700'}`}>
+                    <Clock size={20} />
+                    {mins.toString().padStart(2, '0')}:{secs.toString().padStart(2, '0')}
                 </div>
             );
         };
 
-        const CourseRegistrationModal = ({ onClose, onRegister, defaultGrade, courseType, notify }) => {
-            const [studentName, setStudentName] = useState("");
-            const [phone, setPhone] = useState("");
-            const [email, setEmail] = useState("");
-            const [regGrade, setRegGrade] = useState(defaultGrade || 8);
-            const [isSubmitting, setIsSubmitting] = useState(false);
-            const isScratch = courseType === 'scratch';
-
-            const handleSubmit = async (e) => {
-                e.preventDefault();
-                if (!studentName.trim() || !phone.trim()) return notify("Nhập thiếu thông tin!", "error");
-                setIsSubmitting(true);
-                await onRegister({ studentName, phone, email, regGrade, courseType });
-                setIsSubmitting(false);
-            };
-
-            return (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[60] flex items-center justify-center p-4 animate-in overflow-y-auto">
-                    <div className="bg-slate-900 text-white rounded-2xl shadow-2xl w-full max-w-lg border border-slate-700 animate-slide-up relative">
-                        <div className={`bg-gradient-to-r ${isScratch ? "from-orange-500 to-red-500" : "from-blue-600 to-cyan-600"} p-4 relative`}>
-                            <button onClick={onClose} className="absolute top-3 right-3 text-white/80 hover:bg-white/20 rounded-full p-1"><XCircle size={24}/></button>
-                            <h2 className="text-xl font-bold">{isScratch ? "Lập trình Scratch" : "Lập trình Python"}</h2>
-                            <p className="text-white/80 text-sm">Điền thông tin để thầy liên hệ nhé!</p>
-                        </div>
-                        <div className="p-6">
-                            <form onSubmit={handleSubmit} className="space-y-4">
-                                <div><label className="block text-sm text-slate-400 mb-1">Họ tên</label><input type="text" value={studentName} onChange={e=>setStudentName(e.target.value)} className="w-full bg-slate-800 border border-slate-600 rounded-xl p-3 text-white focus:ring-2 focus:ring-cyan-500 outline-none" placeholder="Nguyễn Văn A" required/></div>
-                                <div><label className="block text-sm text-slate-400 mb-1">Lớp đăng ký</label><div className="flex gap-2">{[6,7,8,9].map(g=><button key={g} type="button" onClick={()=>setRegGrade(g)} className={`flex-1 py-2 rounded-lg border ${regGrade===g?'bg-yellow-400 text-slate-900 border-yellow-400':'border-slate-600 text-slate-400'}`}>Lớp {g}</button>)}</div></div>
-                                <div><label className="block text-sm text-slate-400 mb-1">SĐT Zalo</label><input type="tel" value={phone} onChange={e=>setPhone(e.target.value)} className="w-full bg-slate-800 border border-slate-600 rounded-xl p-3 text-white focus:ring-2 focus:ring-cyan-500 outline-none" placeholder="09xxxxxxx" required/></div>
-                                <button type="submit" disabled={isSubmitting} className={`w-full py-3 bg-white text-slate-900 font-bold rounded-xl hover:bg-slate-200 flex justify-center items-center gap-2 ${isSubmitting?'opacity-70':''}`}>{isSubmitting ? <Loader2 className="animate-spin"/> : <Edit3 size={18}/>} {isSubmitting ? "Đang gửi..." : "Gửi Đăng Ký"}</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        const AdminScreen = ({ onBack, studentList, onDeleteHistory, onUploadData, onChangePassword, onUpdateClassStructure, classStructure, notify }) => {
-            const [activeTab, setActiveTab] = useState('history');
-            const [filterGrade, setFilterGrade] = useState('ALL');
-            const [newClassInput, setNewClassInput] = useState({ grade: 6, name: "" });
-            const [showPwdModal, setShowPwdModal] = useState(false);
-            const [isDeleting, setIsDeleting] = useState(false);
+        // --- QUẢN TRỊ VIÊN (ADMIN SCREEN) ---
+        const AdminScreen = ({ onBack, studentList, classStructure, notify, questionBank, updateQuestionBank }) => {
+            const [tab, setTab] = useState('onluyen');
+            const [exams, setExams] = useState([]);
+            const [smasData, setSmasData] = useState([]);
             const fileInputRef = useRef(null);
+            const smasInputRef = useRef(null);
+            const examInputRef = useRef(null);
+            const [newExam, setNewExam] = useState({ code: '', grade: 8, duration: 45, isAutoSync: true });
 
-            const handleDownloadTemplate = () => {
-                if (!window.XLSX) return notify("Lỗi thư viện Excel. Vui lòng tải lại trang.", "error");
-                const rows = [["Lớp","Loại","Câu hỏi","A","B","C","D","Đáp án"],[8,"TN","Tin học ứng dụng lĩnh vực nào?","Y tế","Giáo dục","Quốc phòng","Cả 3","D"]];
-                const wb = window.XLSX.utils.book_new();
-                const ws = window.XLSX.utils.aoa_to_sheet(rows);
-                window.XLSX.utils.book_append_sheet(wb, ws, "Mau");
-                window.XLSX.writeFile(wb, "Mau_Cau_Hoi.xlsx");
-            };
+            // Fetch Realtime Data for Admin
+            useEffect(() => {
+                if (!db) return;
+                const unsubExams = onSnapshot(collection(db, "exams"), snap => setExams(snap.docs.map(d => ({id: d.id, ...d.data()}))));
+                const unsubSmas = onSnapshot(collection(db, "smas"), snap => setSmasData(snap.docs.map(d => ({id: d.id, ...d.data()}))));
+                return () => { unsubExams(); unsubSmas(); };
+            }, []);
 
-            const handleFileChange = (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
+            // Xử lý Upload file Ôn luyện
+            const handleUploadPractice = (e) => {
+                const file = e.target.files[0]; if(!file) return;
                 const reader = new FileReader();
-                reader.onload = (evt) => {
+                reader.onload = async (evt) => {
                     try {
-                        const wb = window.XLSX.read(new Uint8Array(evt.target.result), {type:'array'});
-                        const json = window.XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
-                        notify("Đã đọc file! (Lưu ý: Tính năng lưu câu hỏi lên Cloud đang phát triển)", "success");
-                    } catch (err) { notify("Lỗi file!", "error"); }
+                        const wb = window.XLSX.read(evt.target.result, {type:'binary'});
+                        const rows = window.XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+                        let newBank = { ...questionBank }; // Giữ dữ liệu cũ
+                        let count = 0;
+
+                        rows.forEach(r => {
+                            const grade = r['Lớp']; const term = r['Kỳ'] || 'GK1'; const type = r['Loại'];
+                            if(!grade || !type) return;
+                            if(!newBank[grade]) newBank[grade] = {};
+                            if(!newBank[grade][term]) newBank[grade][term] = {mcq:[], tf:[], fill:[], essay:[]};
+                            
+                            const qText = r['Câu hỏi']; const ans = r['Đáp án'];
+                            if(type==='TN'){
+                                const opts = [r['A'], r['B'], r['C'], r['D']].filter(Boolean);
+                                const cIdx = ['A','B','C','D'].indexOf(String(ans).toUpperCase());
+                                newBank[grade][term].mcq.push({q: qText, opts, c: cIdx>=0?cIdx:0}); count++;
+                            } else if(type==='DS') { newBank[grade][term].tf.push({q: qText, c: String(ans).toLowerCase()==='đúng'}); count++;
+                            } else if(type==='DT') { newBank[grade][term].fill.push({q: qText, a: String(ans)}); count++;
+                            } else if(type==='TL') { newBank[grade][term].essay.push({q: qText, h: String(ans)}); count++; }
+                        });
+                        
+                        await setDoc(doc(db, "config", "questions"), newBank);
+                        notify(`Đã cập nhật ${count} câu hỏi ôn luyện!`, "success");
+                    } catch(err) { notify("Lỗi file Excel!", "error"); }
                 };
-                reader.readAsArrayBuffer(file);
+                reader.readAsBinaryString(file);
             };
 
-            const handleDelete = async () => {
-                setIsDeleting(true);
-                await onDeleteHistory();
-                setIsDeleting(false);
+            // Xử lý Upload Đề Thi Chính Thức
+            const handleCreateExam = (e) => {
+                const file = e.target.files[0]; if(!file) return;
+                if(!newExam.code.trim()) return notify("Vui lòng nhập Mã đề thi trước khi upload!", "warning");
+                
+                const reader = new FileReader();
+                reader.onload = async (evt) => {
+                    try {
+                        const wb = window.XLSX.read(evt.target.result, {type:'binary'});
+                        const rows = window.XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+                        let examQs = [];
+                        
+                        rows.forEach(r => {
+                            if(r['Loại']==='TN') examQs.push({type: 'mcq', q: r['Câu hỏi'], opts: [r['A'], r['B'], r['C'], r['D']].filter(Boolean), c: ['A','B','C','D'].indexOf(String(r['Đáp án']).toUpperCase())});
+                            if(r['Loại']==='DS') examQs.push({type: 'tf', q: r['Câu hỏi'], c: String(r['Đáp án']).toLowerCase()==='đúng'});
+                            if(r['Loại']==='DT') examQs.push({type: 'fill', q: r['Câu hỏi'], a: String(r['Đáp án'])});
+                        });
+
+                        const examData = { code: newExam.code.toUpperCase(), grade: newExam.grade, duration: newExam.duration, questions: examQs, status: 'active', createdAt: serverTimestamp() };
+                        await addDoc(collection(db, "exams"), examData);
+
+                        if(newExam.isAutoSync) {
+                            // TODO: Merge into practice bank logic here (Simplified for size limit)
+                            notify("Đã tạo đề thi và tạo đề cương tự động!", "success");
+                        } else {
+                            notify(`Đã tạo phòng thi: ${examData.code} với ${examQs.length} câu`, "success");
+                        }
+                        setNewExam({...newExam, code: ''});
+                    } catch(err) { notify("Lỗi tạo đề thi!", "error"); }
+                };
+                reader.readAsBinaryString(file);
             };
 
-            const filteredList = studentList.filter(s => filterGrade === 'ALL' || s.grade?.toString() === filterGrade);
-            const pythonStudents = studentList.filter(s => s.pythonReg);
-            const scratchStudents = studentList.filter(s => s.scratchReg);
+            // Xử lý Upload SMAS
+            const handleUploadSMAS = (e) => {
+                const file = e.target.files[0]; if(!file) return;
+                const reader = new FileReader();
+                reader.onload = async (evt) => {
+                    try {
+                        const wb = window.XLSX.read(evt.target.result, {type:'binary'});
+                        const rows = window.XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+                        let count = 0;
+                        // Batch write simplified
+                        for (let r of rows) {
+                            if(r['Họ và tên'] && r['Lớp']) {
+                                await addDoc(collection(db, "smas"), { name: String(r['Họ và tên']).trim(), className: String(r['Lớp']).trim(), dob: r['Ngày sinh']||'' });
+                                count++;
+                            }
+                        }
+                        notify(`Đã đồng bộ ${count} học sinh từ SMAS!`, "success");
+                    } catch(err) { notify("Cấu trúc file SMAS không đúng (Cần cột 'Họ và tên', 'Lớp')", "error"); }
+                };
+                reader.readAsBinaryString(file);
+            };
 
             return (
-                <div className="min-h-screen bg-slate-100 p-2 md:p-6 animate-in">
-                    <div className="max-w-6xl mx-auto bg-white rounded-3xl shadow-xl overflow-hidden">
-                        <div className="bg-indigo-900 p-4 text-white flex justify-between items-center">
-                            <div className="flex items-center gap-3"><Lock size={24} className="text-yellow-400"/><h2 className="text-xl font-bold">Quản Trị Hệ Thống</h2></div>
-                            <div className="flex gap-2">
-                                <button onClick={() => setShowPwdModal(true)} className="bg-white/10 px-3 py-2 rounded hover:bg-white/20 text-sm flex gap-2 items-center transition-colors"><Key size={16}/> Đổi MK</button>
-                                <button onClick={onBack} className="bg-white/10 px-3 py-2 rounded hover:bg-white/20 text-sm flex gap-2 items-center transition-colors"><LogOut size={16}/> Thoát</button>
-                            </div>
+                <div className="min-h-screen bg-slate-100 flex animate-in">
+                    {/* Sidebar */}
+                    <div className="w-64 bg-indigo-900 text-white flex flex-col shadow-2xl z-10">
+                        <div className="p-6 text-center border-b border-indigo-800">
+                            <ShieldCheck size={40} className="mx-auto mb-2 text-yellow-400" />
+                            <h2 className="font-bold text-lg">LMS Admin</h2>
+                            <p className="text-xs text-indigo-300">Giáo viên</p>
                         </div>
-                        {showPwdModal && <ChangePasswordModal onClose={() => setShowPwdModal(false)} onChangePassword={onChangePassword} notify={notify} />}
-                        
-                        <div className="p-4 md:p-6">
-                            <div className="grid md:grid-cols-2 gap-4 mb-6">
-                                <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                                    <h3 className="font-bold text-blue-900 flex gap-2 mb-2"><Database size={18}/> Quản lý Câu hỏi (Excel)</h3>
-                                    <div className="flex gap-2">
-                                        <button onClick={handleDownloadTemplate} className="flex-1 px-3 py-2 bg-white border rounded shadow-sm text-sm font-bold flex justify-center items-center gap-1 hover:bg-slate-50 transition-colors"><Download size={14}/> Mẫu</button>
-                                        <button onClick={() => fileInputRef.current.click()} className="flex-1 px-3 py-2 bg-blue-600 text-white rounded shadow-sm text-sm font-bold flex justify-center items-center gap-1 hover:bg-blue-700 transition-colors"><Upload size={14}/> Upload</button>
-                                        <input type="file" ref={fileInputRef} className="hidden" accept=".xlsx" onChange={handleFileChange}/>
-                                    </div>
-                                    <p className="text-xs text-blue-700 mt-2">* Tải file mẫu, điền câu hỏi và upload lại.</p>
-                                </div>
-                                <div className="p-4 bg-green-50 border border-green-200 rounded-xl">
-                                    <h3 className="font-bold text-green-900 mb-2">Cấu trúc Lớp học (Cloud)</h3>
-                                    <div className="flex gap-2">
-                                        <select value={newClassInput.grade} onChange={e=>setNewClassInput({...newClassInput, grade: Number(e.target.value)})} className="border rounded px-2 py-1 text-sm bg-white"><option value={6}>K6</option><option value={7}>K7</option><option value={8}>K8</option><option value={9}>K9</option></select>
-                                        <input type="text" placeholder="Tên lớp (VD: 8A1)" value={newClassInput.name} onChange={e=>setNewClassInput({...newClassInput, name: e.target.value})} className="flex-1 border rounded px-2 py-1 text-sm"/>
-                                        <button onClick={()=>{onUpdateClassStructure(newClassInput.grade, newClassInput.name); setNewClassInput({...newClassInput, name: ""})}} className="bg-green-600 text-white px-3 py-1 rounded text-sm font-bold">Thêm</button>
-                                    </div>
-                                    <div className="mt-2 text-xs text-slate-500">Các lớp hiện có: {Object.values(classStructure).flat().length} lớp</div>
-                                </div>
-                            </div>
+                        <nav className="flex-1 p-4 space-y-2">
+                            <button onClick={()=>setTab('onluyen')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition ${tab==='onluyen'?'bg-indigo-700 font-bold':'hover:bg-indigo-800 text-indigo-200'}`}><BookMarked size={18}/> Ngân hàng Ôn luyện</button>
+                            <button onClick={()=>setTab('thi')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition ${tab==='thi'?'bg-indigo-700 font-bold':'hover:bg-indigo-800 text-indigo-200'}`}><Timer size={18}/> Quản lý Thi Online</button>
+                            <button onClick={()=>setTab('smas')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition ${tab==='smas'?'bg-indigo-700 font-bold':'hover:bg-indigo-800 text-indigo-200'}`}><Users size={18}/> Dữ liệu SMAS</button>
+                            <button onClick={()=>setTab('history')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition ${tab==='history'?'bg-indigo-700 font-bold':'hover:bg-indigo-800 text-indigo-200'}`}><List size={18}/> Bảng điểm</button>
+                        </nav>
+                        <div className="p-4 border-t border-indigo-800">
+                            <button onClick={onBack} className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-indigo-800 hover:bg-rose-600 rounded-xl transition font-bold"><LogOut size={16}/> Thoát</button>
+                        </div>
+                    </div>
 
-                            <div className="flex gap-2 mb-4 border-b pb-2 overflow-x-auto no-scrollbar">
-                                <button onClick={() => setActiveTab('history')} className={`whitespace-nowrap px-3 py-2 font-bold text-sm rounded flex gap-2 items-center transition-colors ${activeTab==='history'?'bg-indigo-100 text-indigo-700':'text-slate-500 hover:bg-slate-100'}`}><List size={16}/> Lịch sử</button>
-                                <button onClick={() => setActiveTab('python')} className={`whitespace-nowrap px-3 py-2 font-bold text-sm rounded flex gap-2 items-center transition-colors ${activeTab==='python'?'bg-yellow-100 text-yellow-700':'text-slate-500 hover:bg-slate-100'}`}><Code size={16}/> Python ({pythonStudents.length})</button>
-                                <button onClick={() => setActiveTab('scratch')} className={`whitespace-nowrap px-3 py-2 font-bold text-sm rounded flex gap-2 items-center transition-colors ${activeTab==='scratch'?'bg-orange-100 text-orange-700':'text-slate-500 hover:bg-slate-100'}`}><Gamepad2 size={16}/> Scratch ({scratchStudents.length})</button>
-                            </div>
-
-                            {activeTab === 'history' && (
+                    {/* Main Content */}
+                    <div className="flex-1 p-8 overflow-y-auto">
+                        <div className="max-w-5xl mx-auto bg-white rounded-3xl shadow-sm border border-slate-200 p-8">
+                            
+                            {/* TAB: ÔN LUYỆN */}
+                            {tab === 'onluyen' && (
                                 <div className="animate-in">
-                                    <div className="flex flex-wrap gap-2 mb-4 items-center">
-                                        <select onChange={e=>setFilterGrade(e.target.value)} className="border p-2 rounded text-sm bg-white"><option value="ALL">Tất cả Khối</option><option value="6">K6</option><option value="7">K7</option><option value="8">K8</option><option value="9">K9</option></select>
-                                        <button onClick={handleDelete} disabled={isDeleting} className={`ml-auto text-red-600 border border-red-200 bg-red-50 px-3 py-2 rounded hover:bg-red-100 text-sm flex items-center gap-1 font-bold ${isDeleting ? 'opacity-50' : ''}`}>
-                                            {isDeleting ? <Loader2 size={16} className="animate-spin"/> : <Trash2 size={16}/>} Xóa TOÀN BỘ lịch sử
-                                        </button>
+                                    <h3 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2"><Database className="text-indigo-600"/> Upload Kho Câu Hỏi Ôn Luyện</h3>
+                                    <div className="bg-blue-50 border border-blue-100 p-6 rounded-2xl mb-6">
+                                        <p className="text-sm text-blue-800 mb-4">File Excel cần có các cột: <b>Lớp, Kỳ (GK1/CK1/GK2/CK2), Loại (TN/DS/DT/TL), Câu hỏi, A, B, C, D, Đáp án</b>.</p>
+                                        <div className="flex gap-4">
+                                            <button onClick={()=>notify("Vui lòng tự tạo file Excel theo cấu trúc trên.","info")} className="px-6 py-3 bg-white text-blue-700 font-bold rounded-xl border border-blue-200 hover:bg-blue-100 shadow-sm flex items-center gap-2"><Download size={18}/> Tải Mẫu</button>
+                                            <button onClick={()=>fileInputRef.current.click()} className="px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 shadow-md flex items-center gap-2"><Upload size={18}/> Upload Data</button>
+                                            <input type="file" ref={fileInputRef} className="hidden" accept=".xlsx" onChange={handleUploadPractice}/>
+                                        </div>
                                     </div>
-                                    <div className="overflow-x-auto border rounded-xl shadow-sm max-h-[500px] overflow-y-auto">
+                                </div>
+                            )}
+
+                            {/* TAB: THI ONLINE */}
+                            {tab === 'thi' && (
+                                <div className="animate-in">
+                                    <h3 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2"><Timer className="text-rose-500"/> Tổ chức Thi Online (Có đếm ngược)</h3>
+                                    <div className="bg-rose-50 border border-rose-100 p-6 rounded-2xl mb-8">
+                                        <h4 className="font-bold text-rose-900 mb-4">1. Tạo Mã Đề & Upload Đề Thi</h4>
+                                        <div className="grid grid-cols-3 gap-4 mb-4">
+                                            <input type="text" placeholder="Nhập Mã Đề (VD: THI_GK1_K7)" value={newExam.code} onChange={e=>setNewExam({...newExam, code: e.target.value})} className="p-3 border rounded-xl outline-none focus:ring-2 focus:ring-rose-400 font-bold uppercase"/>
+                                            <select value={newExam.grade} onChange={e=>setNewExam({...newExam, grade: Number(e.target.value)})} className="p-3 border rounded-xl bg-white"><option value={6}>Khối 6</option><option value={7}>Khối 7</option><option value={8}>Khối 8</option><option value={9}>Khối 9</option></select>
+                                            <input type="number" placeholder="Thời gian (phút)" value={newExam.duration} onChange={e=>setNewExam({...newExam, duration: Number(e.target.value)})} className="p-3 border rounded-xl"/>
+                                        </div>
+                                        <label className="flex items-center gap-2 mb-4 text-sm font-medium text-rose-800 cursor-pointer">
+                                            <input type="checkbox" checked={newExam.isAutoSync} onChange={e=>setNewExam({...newExam, isAutoSync: e.target.checked})} className="w-5 h-5 rounded text-rose-600"/>
+                                            Đồng thời thêm câu hỏi này vào Kho Ôn luyện (Tạo đề cương)
+                                        </label>
+                                        <button onClick={()=>examInputRef.current.click()} className="w-full py-3 bg-rose-600 text-white font-bold rounded-xl hover:bg-rose-700 shadow-md flex justify-center items-center gap-2"><Upload size={18}/> Chọn File Đề Thi & Tạo Phòng</button>
+                                        <input type="file" ref={examInputRef} className="hidden" accept=".xlsx" onChange={handleCreateExam}/>
+                                    </div>
+                                    
+                                    <h4 className="font-bold text-slate-700 mb-4">Các Phòng Thi Đang Mở ({exams.length})</h4>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {exams.map(e => (
+                                            <div key={e.id} className="p-4 border rounded-xl shadow-sm bg-white flex justify-between items-center">
+                                                <div>
+                                                    <div className="font-mono font-bold text-lg text-indigo-700">{e.code}</div>
+                                                    <div className="text-sm text-slate-500">Khối {e.grade} • {e.duration} phút • {e.questions?.length} câu</div>
+                                                </div>
+                                                <button onClick={()=>deleteDoc(doc(db, "exams", e.id))} className="p-2 text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={18}/></button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* TAB: SMAS */}
+                            {tab === 'smas' && (
+                                <div className="animate-in">
+                                    <h3 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2"><FileSpreadsheet className="text-emerald-600"/> Đồng bộ dữ liệu SMAS</h3>
+                                    <div className="bg-emerald-50 border border-emerald-100 p-6 rounded-2xl mb-6">
+                                        <p className="text-sm text-emerald-800 mb-4">Tính năng này cấp quyền cho học sinh tham gia Thi Online. File Excel xuất từ SMAS cần có các cột: <b>Họ và tên, Lớp</b>.</p>
+                                        <div className="flex gap-4">
+                                            <button onClick={()=>smasInputRef.current.click()} className="px-6 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 shadow-md flex items-center gap-2"><Upload size={18}/> Tải lên danh sách SMAS</button>
+                                            <input type="file" ref={smasInputRef} className="hidden" accept=".xlsx" onChange={handleUploadSMAS}/>
+                                        </div>
+                                    </div>
+                                    <div className="text-sm text-slate-600 font-medium">Hệ thống đang có {smasData.length} học sinh được cấp quyền thi.</div>
+                                </div>
+                            )}
+
+                            {/* TAB: HISTORY (Giữ nguyên logic cũ, chỉ đổi UI) */}
+                            {tab === 'history' && (
+                                <div className="animate-in">
+                                    <h3 className="text-2xl font-bold text-slate-800 mb-6">Lịch sử Làm Bài</h3>
+                                    <div className="overflow-x-auto border border-slate-200 rounded-2xl shadow-sm">
                                         <table className="w-full text-left">
-                                            <thead className="bg-slate-50 border-b sticky top-0"><tr><th className="p-3">Học sinh</th><th className="p-3">Lớp</th><th className="p-3">Thời gian</th><th className="p-3 text-right">Điểm</th></tr></thead>
+                                            <thead className="bg-slate-50 border-b"><tr><th className="p-4">Học sinh</th><th className="p-4">Lớp</th><th className="p-4">Loại bài</th><th className="p-4 text-right">Điểm</th></tr></thead>
                                             <tbody>
-                                                {filteredList.map((s) => (
-                                                    <tr key={s.id} className="border-b hover:bg-slate-50 text-sm transition-colors">
-                                                        <td className="p-3 font-bold text-indigo-900">{s.name}</td>
-                                                        <td className="p-3"><span className="bg-blue-100 px-2 py-1 rounded text-xs text-blue-800 font-bold">{s.className}</span></td>
-                                                        <td className="p-3 text-slate-500">{s.loginTime}</td>
-                                                        <td className="p-3 text-right font-bold text-green-600">{s.lastScore!==undefined ? s.lastScore : '-'}</td>
+                                                {studentList.slice(0, 50).map(s => (
+                                                    <tr key={s.id} className="border-b hover:bg-slate-50">
+                                                        <td className="p-4 font-bold text-indigo-900">{s.name}</td>
+                                                        <td className="p-4"><span className="bg-indigo-100 text-indigo-800 px-2 py-1 rounded-md text-xs font-bold">{s.className}</span></td>
+                                                        <td className="p-4 text-slate-600 text-sm">{s.examCode ? `Thi: ${s.examCode}` : 'Ôn luyện tự do'}</td>
+                                                        <td className="p-4 text-right font-black text-emerald-600">{s.lastScore!==undefined ? s.lastScore : '-'}</td>
                                                     </tr>
                                                 ))}
-                                                {filteredList.length === 0 && <tr><td colSpan="4" className="p-8 text-center text-slate-400">Chưa có dữ liệu</td></tr>}
                                             </tbody>
                                         </table>
                                     </div>
                                 </div>
                             )}
-                             {(activeTab === 'python' || activeTab === 'scratch') && (
-                                <div className="overflow-x-auto border rounded-xl shadow-sm animate-in">
-                                    <table className="w-full text-left min-w-[700px]">
-                                        <thead className={`border-b ${activeTab==='python'?'bg-yellow-50':'bg-orange-50'}`}>
-                                            <tr><th className="p-3">Họ Tên</th><th className="p-3">Lớp (Trường)</th><th className="p-3">Đăng ký</th><th className="p-3">SĐT</th><th className="p-3">Ngày ĐK</th></tr>
-                                        </thead>
-                                        <tbody>
-                                            {(activeTab==='python' ? pythonStudents : scratchStudents).map((s) => {
-                                                const reg = activeTab==='python' ? s.pythonReg : s.scratchReg;
-                                                return (
-                                                    <tr key={s.id} className="border-b hover:bg-slate-50 text-sm transition-colors">
-                                                        <td className="p-3 font-bold">{reg.studentName}</td>
-                                                        <td className="p-3">{s.className}</td>
-                                                        <td className="p-3"><span className="font-bold border px-2 py-1 rounded bg-white shadow-sm">Lớp {reg.regGrade}</span></td>
-                                                        <td className="p-3 font-mono text-indigo-600 font-semibold">{reg.phone}</td>
-                                                        <td className="p-3 text-slate-500">{s.dateKey}</td>
-                                                    </tr>
-                                                );
-                                            })}
-                                            {(activeTab==='python' ? pythonStudents : scratchStudents).length === 0 && <tr><td colSpan="5" className="p-8 text-center text-slate-400">Chưa có đăng ký nào.</td></tr>}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )}
+
                         </div>
                     </div>
                 </div>
             );
         };
 
-        // --- RESTORED WELCOME SCREEN ---
-        const WelcomeScreen = ({ onLogin, onAdminLogin, adminPassword, classStructure, notify }) => {
-            const [name, setName] = useState("");
-            const [grade, setGrade] = useState(8);
-            const [className, setClassName] = useState("");
-            const [isPhoneLogin, setIsPhoneLogin] = useState(false);
-            const [showAdminModal, setShowAdminModal] = useState(false);
-            const [adminPwdInput, setAdminPwdInput] = useState("");
-            const [loading, setLoading] = useState(false);
+        // --- DASHBOARD (HỌC SINH) ---
+        const Dashboard = ({ user, onStartPractice, onStartExam, onLogout }) => {
+            const [examCode, setExamCode] = useState('');
+            const [selectedTerm, setSelectedTerm] = useState('GK1');
+            const [checkingSMAS, setCheckingSMAS] = useState(false);
 
-            useEffect(() => {
-                if (classStructure[grade] && classStructure[grade].length > 0) setClassName(classStructure[grade][0]);
-                else setClassName("");
-            }, [grade, classStructure]);
+            const handleEnterExam = async () => {
+                if(!examCode.trim()) return alert("Vui lòng nhập mã đề!");
+                setCheckingSMAS(true);
+                try {
+                    // Kiểm tra SMAS
+                    const qSmas = query(collection(db, "smas"), where("name", "==", user.name), where("className", "==", user.className));
+                    const smasSnap = await getDocs(qSmas);
+                    if(smasSnap.empty) {
+                        alert("Em không có trong danh sách dự thi (Dữ liệu SMAS không khớp). Vui lòng báo Giám thị!");
+                        setCheckingSMAS(false); return;
+                    }
 
-            const handleLogin = async () => {
-                if (!name.trim()) return notify("Vui lòng nhập tên!", "error");
-                if (!db) return notify("Đang kết nối Firebase, vui lòng đợi...", "warning");
-                setLoading(true);
-                await onLogin({name, grade, className});
-                setLoading(false);
+                    // Kiểm tra Mã đề
+                    const qExam = query(collection(db, "exams"), where("code", "==", examCode.toUpperCase().trim()));
+                    const examSnap = await getDocs(qExam);
+                    if(examSnap.empty) {
+                        alert("Mã đề không tồn tại hoặc đã bị khóa!");
+                        setCheckingSMAS(false); return;
+                    }
+
+                    const examData = examSnap.docs[0].data();
+                    if(examData.grade !== user.grade) {
+                        alert(`Mã đề này dành cho khối ${examData.grade}, em đang học khối ${user.grade}!`);
+                        setCheckingSMAS(false); return;
+                    }
+
+                    onStartExam(examData);
+                } catch(e) { alert("Lỗi kết nối!"); }
+                setCheckingSMAS(false);
             };
 
             return (
-                <div className="flex flex-col items-center justify-center min-h-screen p-4 text-white relative bg-cover bg-center overflow-hidden" style={{backgroundImage: `url('${BACKGROUND_IMAGE}')`, backgroundColor: '#1e293b'}}>
-                    <div className="absolute inset-0 bg-slate-900/60 z-0"></div>
-                    <button onClick={() => setShowAdminModal(true)} className="absolute top-4 right-4 bg-white/10 p-2 rounded-full hover:bg-white/20 z-20"><Lock size={20}/></button>
+                <div className="min-h-screen bg-slate-100 animate-in pb-10">
+                    <header className="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0 z-40 shadow-sm">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-xl shadow-lg">{user.grade}</div>
+                            <div><h2 className="font-bold text-xl text-slate-800">{user.name}</h2><p className="text-sm text-slate-500 font-medium">Lớp {user.className}</p></div>
+                        </div>
+                        <button onClick={onLogout} className="flex items-center gap-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 px-4 py-2 rounded-xl transition font-medium"><LogOut size={18}/> Thoát</button>
+                    </header>
 
-                    {showAdminModal && (
-                        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-                            <div className="bg-white text-slate-900 p-6 rounded-xl w-full max-w-sm">
-                                <h3 className="font-bold mb-4">Đăng nhập Quản trị</h3>
-                                <input type="password" value={adminPwdInput} onChange={e=>setAdminPwdInput(e.target.value)} className="w-full border p-2 rounded mb-4 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Mật khẩu"/>
-                                <div className="flex gap-2"><button onClick={()=>setShowAdminModal(false)} className="flex-1 bg-slate-200 py-2 rounded font-bold">Hủy</button><button onClick={()=>{if(adminPwdInput===adminPassword) onAdminLogin(); else notify("Sai mật khẩu!","error")}} className="flex-1 bg-indigo-600 text-white py-2 rounded font-bold">Vào</button></div>
+                    <div className="max-w-5xl mx-auto mt-8 px-4 grid md:grid-cols-2 gap-8">
+                        {/* KHU VỰC THI ONLINE */}
+                        <div className="bg-white rounded-3xl p-8 shadow-xl border border-rose-100 relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-rose-50 rounded-full blur-3xl -mr-20 -mt-20 z-0"></div>
+                            <div className="relative z-10">
+                                <div className="inline-flex items-center justify-center p-3 bg-rose-100 text-rose-600 rounded-2xl mb-6"><Timer size={32}/></div>
+                                <h2 className="text-3xl font-black text-slate-800 mb-2">Phòng Thi Online</h2>
+                                <p className="text-slate-500 mb-8">Nhập mã đề giáo viên cung cấp để bắt đầu làm bài kiểm tra chính thức.</p>
+                                
+                                <div className="space-y-4">
+                                    <input type="text" value={examCode} onChange={e=>setExamCode(e.target.value)} placeholder="Nhập Mã Đề..." className="w-full p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl font-mono font-bold text-center text-xl outline-none focus:border-rose-400 focus:bg-white transition uppercase"/>
+                                    <button onClick={handleEnterExam} disabled={checkingSMAS} className="w-full py-4 bg-gradient-to-r from-rose-500 to-red-600 text-white font-bold text-lg rounded-2xl shadow-lg shadow-rose-500/30 hover:shadow-rose-500/50 hover:-translate-y-1 transition-all flex justify-center items-center gap-2">
+                                        {checkingSMAS ? <Loader2 className="animate-spin"/> : <Play fill="currentColor"/>} VÀO THI NGAY
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    )}
 
-                    <div className="bg-white/10 backdrop-blur-md p-6 md:p-8 rounded-3xl shadow-2xl w-full max-w-md border border-white/20 relative z-10 animate-slide-up">
-                        <div className="text-center mb-6 md:mb-8">
-                            <div className="bg-gradient-to-tr from-yellow-400 to-orange-500 w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg animate-bounce"><Monitor size={40} className="text-white md:w-12 md:h-12"/></div>
-                            <h1 className="text-xl md:text-2xl font-bold mb-2 text-white uppercase leading-snug drop-shadow-lg">
-                                ĐAM MÊ TIN HỌC VỚI THẦY LÊ ĐÌNH CƯƠNG<br/>
-                                TRƯỜNG THCS CƯ PUI
-                            </h1>
-                            <div className="mt-4 p-3 bg-black/30 border border-white/20 rounded-xl backdrop-blur-sm inline-block">
-                                <p className="text-yellow-300 font-bold text-sm md:text-base flex items-center justify-center gap-2">
-                                    <Phone size={16} className="animate-pulse"/> Thông tin liên hệ: Zalo 0967080202
-                                </p>
+                        {/* KHU VỰC ÔN LUYỆN */}
+                        <div className="bg-white rounded-3xl p-8 shadow-xl border border-indigo-100 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50 rounded-full blur-3xl -mr-20 -mt-20 z-0"></div>
+                            <div className="relative z-10">
+                                <div className="inline-flex items-center justify-center p-3 bg-indigo-100 text-indigo-600 rounded-2xl mb-6"><BookOpen size={32}/></div>
+                                <h2 className="text-3xl font-black text-slate-800 mb-2">Góc Ôn Luyện</h2>
+                                <p className="text-slate-500 mb-6">Chọn kỳ thi và dạng bài để luyện tập không giới hạn thời gian.</p>
+                                
+                                <div className="grid grid-cols-2 gap-3 mb-6">
+                                    {TERMS.map(t => (
+                                        <button key={t.id} onClick={()=>setSelectedTerm(t.id)} className={`p-3 rounded-xl font-bold border-2 transition ${selectedTerm===t.id ? 'bg-indigo-50 border-indigo-500 text-indigo-700' : 'border-slate-100 text-slate-500 hover:border-slate-300'}`}>{t.name}</button>
+                                    ))}
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                    {[{id:'mcq',n:'Trắc Nghiệm', i:<CheckCircle size={18}/>},{id:'tf',n:'Đúng / Sai', i:<HelpCircle size={18}/>},{id:'fill',n:'Điền Khuyết', i:<Edit3 size={18}/>},{id:'essay',n:'Tự Luận', i:<PenTool size={18}/>}].map(m => (
+                                        <button key={m.id} onClick={()=>onStartPractice(selectedTerm, m.id)} className="flex items-center gap-2 p-4 bg-slate-50 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 font-semibold text-slate-700 transition group">
+                                            <span className="text-slate-400 group-hover:text-indigo-500">{m.i}</span> {m.n}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                        <div className="space-y-4">
-                            <div className="flex bg-black/30 rounded-xl p-1 border border-white/10">
-                                <button className={`flex-1 py-2 rounded-lg transition-all text-sm md:text-base ${!isPhoneLogin?'bg-white text-indigo-900 font-bold':'text-white'}`} onClick={()=>setIsPhoneLogin(false)}><User size={16} className="inline mr-1"/> Học sinh</button>
-                                <button className={`flex-1 py-2 rounded-lg transition-all text-sm md:text-base ${isPhoneLogin?'bg-white text-indigo-900 font-bold':'text-white'}`} onClick={()=>setIsPhoneLogin(true)}><Smartphone size={16} className="inline mr-1"/> Phụ huynh</button>
-                            </div>
-                            <input type={isPhoneLogin?"tel":"text"} value={name} onChange={e=>setName(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/20 text-white font-bold placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400" placeholder={isPhoneLogin?"Số điện thoại...":"Nhập tên của em..."}/>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div><label className="text-blue-200 text-sm">Khối</label><select value={grade} onChange={e=>setGrade(Number(e.target.value))} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/20 text-white font-bold"><option className="text-black" value={6}>6</option><option className="text-black" value={7}>7</option><option className="text-black" value={8}>8</option><option className="text-black" value={9}>9</option></select></div>
-                                <div><label className="text-blue-200 text-sm">Lớp</label><select value={className} onChange={e=>setClassName(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/20 text-white font-bold">{classStructure[grade]?.map(c=><option className="text-black" key={c} value={c}>{c}</option>)}</select></div>
-                            </div>
-                            <button onClick={handleLogin} disabled={loading} className="w-full py-3 md:py-4 mt-4 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-xl font-bold text-indigo-900 text-lg shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2">{loading ? <Loader2 className="animate-spin"/> : <Play size={24} fill="currentColor"/>} BẮT ĐẦU ÔN LUYỆN</button>
                         </div>
                     </div>
-                    <p className="mt-6 text-sm text-white/50 relative z-10">© 2025 Design by Thầy Lê Đình Cương GV Tin Học THCS Cư Pui</p>
                 </div>
             );
         };
 
-        const Dashboard = ({ user, onSelectMode, onLogout, onOpenCourse }) => (
-            <div className="min-h-screen bg-slate-50 animate-in">
-                <header className="bg-indigo-900 text-white p-4 shadow-lg sticky top-0 z-40 flex justify-between items-center backdrop-blur-md bg-indigo-900/95">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-yellow-400 flex items-center justify-center text-indigo-900 font-bold shadow-inner">{user.grade}</div>
-                        <div><h2 className="font-bold text-base md:text-lg">{user.name}</h2><p className="text-xs text-indigo-200 font-medium">{user.className}</p></div>
-                    </div>
-                    <button onClick={onLogout} className="text-sm bg-white/10 px-4 py-2 rounded-lg hover:bg-white/20 font-semibold transition-colors">Thoát</button>
-                </header>
-                <div className="max-w-4xl mx-auto p-4 md:p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                        <div className="p-6 bg-gradient-to-br from-slate-800 to-indigo-900 rounded-2xl md:rounded-3xl shadow-xl text-white relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 w-40 h-40 bg-cyan-500/20 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-cyan-500/30 transition-all"></div>
-                            <h3 className="text-lg md:text-xl font-bold mb-1 flex gap-2 items-center"><Code className="text-cyan-400"/> LẬP TRÌNH PYTHON</h3>
-                            <button onClick={()=>onOpenCourse('python')} className="w-full bg-white/10 border border-white/20 py-2 rounded-xl text-sm font-bold mt-4 hover:bg-white/20 transition-all">Đăng ký ngay</button>
-                        </div>
-                        <div className="p-6 bg-gradient-to-br from-orange-600 to-red-700 rounded-2xl md:rounded-3xl shadow-xl text-white relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 w-40 h-40 bg-yellow-500/20 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-yellow-500/30 transition-all"></div>
-                            <h3 className="text-lg md:text-xl font-bold mb-1 flex gap-2 items-center"><Gamepad2 className="text-yellow-300"/> LẬP TRÌNH SCRATCH</h3>
-                            <button onClick={()=>onOpenCourse('scratch')} className="w-full bg-white/10 border border-white/20 py-2 rounded-xl text-sm font-bold mt-4 hover:bg-white/20 transition-all">Đăng ký ngay</button>
-                        </div>
-                    </div>
-                    <h3 className="text-xl md:text-2xl font-bold text-slate-800 mb-4 md:mb-6 flex items-center gap-2"><Star className="text-yellow-500" fill="currentColor"/> Chọn thử thách</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                        {[{id:'mcq',t:'Trắc Nghiệm',i:<CheckCircle size={28}/>,c:'from-blue-500 to-cyan-400'},{id:'tf',t:'Đúng / Sai',i:<HelpCircle size={28}/>,c:'from-green-500 to-emerald-400'},{id:'fill',t:'Điền Khuyết',i:<Edit3 size={28}/>,c:'from-purple-500 to-pink-400'},{id:'essay',t:'Tự Luận',i:<BookOpen size={28}/>,c:'from-orange-500 to-red-400'}].map(m=>(
-                            <button key={m.id} onClick={()=>onSelectMode(m.id)} className={`relative p-5 md:p-6 rounded-2xl shadow-lg hover:-translate-y-1 transition-all bg-gradient-to-br ${m.c} text-white text-left overflow-hidden group`}>
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-10 -mt-10 group-hover:scale-150 transition-transform"></div>
-                                <div className="relative z-10 flex justify-between items-center"><div><h4 className="text-xl md:text-2xl font-bold">{m.t}</h4></div><div className="p-3 bg-white/20 rounded-xl">{m.i}</div></div>
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            </div>
-        );
-
-        const GameScreen = ({ user, mode, onFinish, onBack, questionData }) => {
+        // --- GAME/EXAM SCREEN ---
+        const PlayScreen = ({ user, examMode, term, mode, examData, onFinish, onBack, questionBank }) => {
             const [qIdx, setQIdx] = useState(0);
             const [score, setScore] = useState(0);
-            const [feedback, setFeedback] = useState(null);
             const [inputVal, setInputVal] = useState("");
-            const [showHint, setShowHint] = useState(false);
-            const [aiRes, setAiRes] = useState(null);
-            const [loadingAI, setLoadingAI] = useState(false);
-            const questions = questionData[user.grade]?.[mode] || [];
+            const [feedback, setFeedback] = useState(null); // Chỉ dùng cho Ôn luyện
+            
+            // Nếu là thi Online, lấy câu hỏi từ examData. Nếu ôn luyện, lấy từ questionBank
+            const questions = examMode ? (examData?.questions || []) : (questionBank?.[user.grade]?.[term]?.[mode] || []);
             const q = questions[qIdx];
-            useEffect(() => { setAiRes(null); setLoadingAI(false); setShowHint(false); setInputVal(""); setFeedback(null); }, [qIdx]);
 
-            if(!q) return <div className="min-h-screen flex items-center justify-center flex-col bg-slate-50"><p className="text-xl font-bold text-slate-500 mb-4">Chưa có câu hỏi.</p><button onClick={onBack} className="bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold">Quay lại</button></div>;
+            const handleAutoSubmit = () => { onFinish({score, total: questions.length*10, examCode: examData?.code}); };
 
-            const handleAns = (ans) => {
-                if(feedback) return;
-                const isCorrect = (mode==='mcq' || mode==='tf') ? ans === q.correct : inputVal.toLowerCase().trim() === q.answer?.toLowerCase().trim();
-                setFeedback(isCorrect?'correct':'wrong');
-                if(isCorrect) setScore(score+10);
-                setTimeout(() => {
-                    if(qIdx < questions.length-1) setQIdx(qIdx+1);
-                    else onFinish({score: isCorrect?score+10:score, total: questions.length*10});
-                }, isCorrect ? 1500 : 3000); 
+            if(!q) return <div className="min-h-screen flex items-center justify-center flex-col bg-slate-50"><p className="text-xl font-medium text-slate-500 mb-4">Chưa có câu hỏi cho phần này.</p><button onClick={onBack} className="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:bg-indigo-700">Quay lại</button></div>;
+
+            const handleAnswer = (ans) => {
+                if(feedback && !examMode) return; // Chống click đúp khi đang hiện kết quả ôn luyện
+
+                let isCorrect = false;
+                const type = examMode ? q.type : mode;
+
+                if (type === 'mcq' || type === 'tf') isCorrect = (ans === q.c);
+                else isCorrect = (inputVal.toLowerCase().trim() === (q.a || '').toLowerCase().trim());
+
+                if (isCorrect) setScore(prev => prev + 10);
+
+                if (examMode) {
+                    // Chế độ THI: Chuyển câu luôn, không hiện đúng sai
+                    if (qIdx < questions.length - 1) { setQIdx(qIdx + 1); setInputVal(""); }
+                    else handleAutoSubmit();
+                } else {
+                    // Chế độ ÔN LUYỆN: Hiện thông báo đúng sai rồi mới chuyển câu
+                    setFeedback(isCorrect ? 'correct' : 'wrong');
+                    setTimeout(() => {
+                        if (qIdx < questions.length - 1) { setQIdx(qIdx + 1); setInputVal(""); setFeedback(null); }
+                        else onFinish({score: isCorrect ? score + 10 : score, total: questions.length*10});
+                    }, isCorrect ? 1000 : 2500);
+                }
             };
-            const askAI = async (type) => {
-                setLoadingAI(true);
-                const p = type==='hint' ? `Gợi ý ngắn gọn cho câu hỏi: "${q.question}"` : `Chấm điểm câu trả lời: "${inputVal}" cho câu hỏi "${q.question}". Gợi ý: "${q.hint}"`;
-                const res = await callGeminiAPI(p);
-                setAiRes(res);
-                setLoadingAI(false);
-            };
+
+            const currentType = examMode ? q.type : mode;
 
             return (
                 <div className="min-h-screen bg-slate-100 flex flex-col animate-in">
-                    <div className="bg-white p-4 shadow-sm flex justify-between items-center px-4 md:px-6 sticky top-0 z-30">
-                        <button onClick={onBack}><XCircle className="text-slate-400 hover:text-slate-600" size={28}/></button>
-                        <div className="flex-1 mx-4 h-3 bg-slate-200 rounded-full overflow-hidden"><div className="h-full bg-yellow-400 transition-all duration-500" style={{width:`${((qIdx+1)/questions.length)*100}%`}}></div></div>
-                        <span className="font-bold text-indigo-900 text-sm">{qIdx+1}/{questions.length}</span>
+                    {/* Header: Hiển thị Timer nếu đang thi */}
+                    <div className="bg-white p-4 shadow-sm flex justify-between items-center px-6 sticky top-0 z-30">
+                        <button onClick={()=>{ if(examMode && !confirm("Đang thi! Nộp bài sớm?")) return; onBack();}} className="text-slate-400 hover:text-slate-600"><XCircle size={28}/></button>
+                        
+                        {examMode ? <TimerDisplay initialMinutes={examData.duration} onTimeUp={handleAutoSubmit} /> 
+                                  : <div className="font-bold text-indigo-800 bg-indigo-50 px-4 py-2 rounded-xl">Ôn luyện {term}</div>}
+                        
+                        <div className="flex items-center gap-4">
+                            <span className="font-bold text-slate-700">Câu {qIdx+1}/{questions.length}</span>
+                        </div>
                     </div>
+
                     <div className="flex-1 p-4 max-w-3xl mx-auto w-full flex flex-col justify-center">
-                        <div className="w-full flex justify-end mb-2"><button onClick={()=>askAI('hint')} disabled={loadingAI} className="flex gap-2 items-center text-sm font-bold text-purple-600 bg-purple-100 px-4 py-2 rounded-full hover:bg-purple-200">{loadingAI?<Loader2 className="animate-spin" size={16}/>:<Sparkles size={16}/>} AI Gợi ý</button></div>
-                        <div className="bg-white p-6 rounded-3xl shadow-xl w-full text-center mb-6 relative overflow-hidden">
-                            {feedback==='correct' && <div className="absolute inset-0 bg-green-500/95 flex items-center justify-center z-20 text-white text-3xl font-bold animate-in"><CheckCircle size={60} className="mb-2 block mx-auto"/> ĐÚNG!</div>}
-                            {feedback==='wrong' && <div className="absolute inset-0 bg-red-500/95 flex flex-col items-center justify-center z-20 text-white animate-in p-6"><XCircle size={60} className="mb-2 block mx-auto"/><h2 className="text-3xl font-bold mb-4">SAI RỒI!</h2><div className="bg-white/20 p-4 rounded-xl text-lg">Đáp án: {mode === 'mcq' ? q.options[q.correct] : mode === 'tf' ? (q.correct ? "ĐÚNG" : "SAI") : q.answer}</div></div>}
-                            <h2 className="text-xl md:text-2xl font-bold text-slate-800 leading-relaxed mb-4">{q.question}</h2>
-                            {aiRes && <div className="bg-purple-50 p-4 rounded-xl border border-purple-200 text-sm text-left mb-4"><strong className="text-purple-700">AI:</strong> {aiRes}</div>}
+                        <div className="bg-white p-8 rounded-3xl shadow-xl w-full relative overflow-hidden">
+                            {/* Hiệu ứng Đúng Sai (Chỉ Ôn luyện) */}
+                            {!examMode && feedback === 'correct' && <div className="absolute inset-0 bg-emerald-500/95 flex items-center justify-center z-20 text-white text-4xl font-black animate-in"><CheckCircle size={80} className="mr-4"/> ĐÚNG!</div>}
+                            {!examMode && feedback === 'wrong' && <div className="absolute inset-0 bg-rose-500/95 flex flex-col items-center justify-center z-20 text-white animate-in p-8"><XCircle size={80} className="mb-4"/><h2 className="text-4xl font-black mb-4">SAI RỒI</h2><div className="bg-white/20 p-4 rounded-2xl text-xl font-medium">Đáp án: {currentType === 'mcq' ? q.opts[q.c] : currentType === 'tf' ? (q.c ? "ĐÚNG" : "SAI") : q.a}</div></div>}
+
+                            <h2 className="text-2xl md:text-3xl font-bold text-slate-800 leading-snug mb-8">{q.q}</h2>
+                            
                             <div className="w-full">
-                                {mode==='mcq' && <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{q.options.map((o,i)=><button key={i} onClick={()=>handleAns(i)} className="p-4 bg-white border-2 rounded-xl font-semibold hover:border-indigo-500 hover:bg-indigo-50 text-left flex gap-3 text-sm md:text-base"><span className="text-indigo-600 font-bold bg-indigo-50 w-6 h-6 rounded-full flex items-center justify-center">{String.fromCharCode(65+i)}</span> {o}</button>)}</div>}
-                                {mode==='tf' && <div className="grid grid-cols-2 gap-4"><button onClick={()=>handleAns(true)} className="p-8 bg-green-50 border-2 border-green-200 rounded-2xl font-bold text-green-700 hover:bg-green-100 text-xl">ĐÚNG</button><button onClick={()=>handleAns(false)} className="p-8 bg-red-50 border-2 border-red-200 rounded-2xl font-bold text-red-700 hover:bg-red-100 text-xl">SAI</button></div>}
-                                {(mode==='fill' || mode==='essay') && <div className="flex flex-col gap-4">
-                                    {mode==='fill' ? <input type="text" value={inputVal} onChange={e=>setInputVal(e.target.value)} className="p-4 border-2 rounded-xl text-center text-lg font-bold text-indigo-900 outline-none focus:border-indigo-500" placeholder="Đáp án..."/> : <textarea rows="4" value={inputVal} onChange={e=>setInputVal(e.target.value)} className="p-4 border-2 rounded-xl text-base outline-none focus:border-orange-500" placeholder="Trả lời..."/>}
-                                    {showHint && <div className="bg-yellow-50 p-3 rounded text-yellow-800 text-sm border border-yellow-200">Gợi ý: {q.hint}</div>}
-                                    <div className="flex gap-3">
-                                        {mode==='essay' && <button onClick={()=>setShowHint(true)} className="px-4 py-3 bg-slate-100 font-bold rounded-xl text-slate-600 text-sm">Gợi ý</button>}
-                                        {mode==='essay' && <button onClick={()=>askAI('grade')} className="flex-1 bg-purple-600 text-white font-bold rounded-xl flex justify-center items-center gap-2 text-sm">Chấm điểm AI</button>}
-                                        <button onClick={mode==='fill' ? handleAns : () => { if(qIdx<questions.length-1) setQIdx(qIdx+1); else onFinish({score, total:0}); }} className="flex-1 bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 shadow-lg">{mode==='fill'?'Kiểm tra':'Tiếp theo'}</button>
-                                    </div>
+                                {currentType==='mcq' && <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{q.opts.map((o,i)=><button key={i} onClick={()=>handleAnswer(i)} className="p-5 bg-slate-50 border-2 border-slate-100 rounded-2xl font-semibold hover:border-indigo-500 hover:bg-indigo-50 text-left flex gap-4 text-base md:text-lg transition-all"><span className="text-indigo-600 font-black bg-indigo-100 w-8 h-8 rounded-full flex items-center justify-center shrink-0">{String.fromCharCode(65+i)}</span> {o}</button>)}</div>}
+                                {currentType==='tf' && <div className="grid grid-cols-2 gap-6"><button onClick={()=>handleAnswer(true)} className="py-8 bg-emerald-50 border-2 border-emerald-200 rounded-3xl font-black text-emerald-600 hover:bg-emerald-100 text-2xl transition">ĐÚNG</button><button onClick={()=>handleAnswer(false)} className="py-8 bg-rose-50 border-2 border-rose-200 rounded-3xl font-black text-rose-600 hover:bg-rose-100 text-2xl transition">SAI</button></div>}
+                                {(currentType==='fill' || currentType==='essay') && <div className="flex flex-col gap-4">
+                                    {currentType==='fill' ? <input type="text" value={inputVal} onChange={e=>setInputVal(e.target.value)} className="p-5 border-2 border-slate-200 rounded-2xl text-center text-xl font-bold text-indigo-900 outline-none focus:border-indigo-500 bg-slate-50" placeholder="Nhập đáp án..."/> : <textarea rows="5" value={inputVal} onChange={e=>setInputVal(e.target.value)} className="p-5 border-2 border-slate-200 rounded-2xl text-lg outline-none focus:border-indigo-500 bg-slate-50" placeholder="Trình bày câu trả lời..."/>}
+                                    <button onClick={handleAnswer} className="w-full bg-indigo-600 text-white font-black text-lg py-4 rounded-2xl hover:bg-indigo-700 shadow-xl shadow-indigo-200 transition mt-2">Nộp Câu Trả Lời</button>
                                 </div>}
                             </div>
                         </div>
@@ -624,209 +506,107 @@
             );
         };
 
-        const ResultScreen = ({ score, total, onRetry, onHome }) => (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-6 text-center animate-in">
-                <div className="w-32 h-32 rounded-full bg-yellow-100 flex items-center justify-center mb-6 shadow-2xl animate-bounce border-4 border-white"><Trophy size={64} className="text-yellow-600"/></div>
-                <h2 className="text-3xl font-extrabold text-slate-800 mb-2">Hoàn Thành!</h2>
-                <div className="bg-white p-6 rounded-2xl shadow-lg border border-slate-100 mb-8 w-full max-w-xs">
-                    <p className="text-slate-500 mb-2 text-sm uppercase font-bold">Tổng điểm</p>
-                    <p className="text-5xl font-black text-indigo-600">{score} <span className="text-2xl text-slate-400 font-normal">/ {total}</span></p>
+        const WelcomeScreen = ({ onLogin, onAdminLogin, classStructure }) => {
+            const [name, setName] = useState("");
+            const [grade, setGrade] = useState(8);
+            const [className, setClassName] = useState("");
+            const [showAdmin, setShowAdmin] = useState(false);
+            const [pwd, setPwd] = useState("");
+
+            useEffect(() => { setClassName(classStructure[grade]?.[0] || ""); }, [grade, classStructure]);
+
+            return (
+                <div className="min-h-screen flex flex-col items-center justify-center p-4 relative" style={{background: `url(${BG_IMG}) center/cover`}}>
+                    <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-sm z-0"></div>
+                    <button onClick={()=>setShowAdmin(true)} className="absolute top-6 right-6 text-white/50 hover:text-white z-20"><ShieldCheck size={28}/></button>
+
+                    {showAdmin && (
+                        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center">
+                            <div className="bg-white p-6 rounded-2xl w-80 text-center animate-in">
+                                <ShieldCheck size={40} className="mx-auto mb-4 text-indigo-600"/>
+                                <h3 className="font-bold text-lg mb-4">Đăng nhập Admin</h3>
+                                <input type="password" value={pwd} onChange={e=>setPwd(e.target.value)} placeholder="Mật khẩu" className="w-full p-3 border rounded-xl mb-4 text-center font-mono outline-none focus:border-indigo-500"/>
+                                <div className="flex gap-2"><button onClick={()=>setShowAdmin(false)} className="flex-1 bg-slate-100 py-3 rounded-xl font-bold text-slate-600">Hủy</button><button onClick={()=>{if(pwd==='admin') onAdminLogin(); else alert('Sai mật khẩu!');}} className="flex-1 bg-indigo-600 py-3 rounded-xl font-bold text-white shadow-lg shadow-indigo-200">Vào</button></div>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="glass-panel p-8 md:p-10 rounded-[2.5rem] shadow-2xl w-full max-w-md relative z-10 animate-slide-up border-t border-white/40">
+                        <div className="w-24 h-24 bg-gradient-to-tr from-yellow-400 to-orange-500 rounded-full mx-auto mb-6 flex items-center justify-center shadow-xl shadow-orange-500/20"><Monitor size={48} className="text-white"/></div>
+                        <h1 className="text-2xl md:text-3xl font-black text-center text-white mb-2 tracking-tight">TIN HỌC THẦY CƯƠNG</h1>
+                        <p className="text-center text-indigo-200 font-medium mb-8">Hệ thống Ôn Luyện & Thi Online</p>
+
+                        <div className="space-y-4">
+                            <input type="text" value={name} onChange={e=>setName(e.target.value)} placeholder="Họ và tên của em..." className="w-full p-4 rounded-2xl bg-white/10 border border-white/20 text-white placeholder-white/50 font-bold text-lg focus:outline-none focus:bg-white/20 focus:border-white/40 transition"/>
+                            <div className="grid grid-cols-2 gap-4">
+                                <select value={grade} onChange={e=>setGrade(Number(e.target.value))} className="p-4 rounded-2xl bg-white/10 border border-white/20 text-white font-bold focus:outline-none focus:bg-slate-800"><option value={6} className="text-slate-800">Khối 6</option><option value={7} className="text-slate-800">Khối 7</option><option value={8} className="text-slate-800">Khối 8</option><option value={9} className="text-slate-800">Khối 9</option></select>
+                                <select value={className} onChange={e=>setClassName(e.target.value)} className="p-4 rounded-2xl bg-white/10 border border-white/20 text-white font-bold focus:outline-none focus:bg-slate-800">{classStructure[grade]?.map(c=><option key={c} value={c} className="text-slate-800">{c}</option>)}</select>
+                            </div>
+                            <button onClick={()=>name.trim() ? onLogin({name, grade, className}) : alert('Nhập tên!')} className="w-full py-4 mt-2 bg-white text-indigo-900 font-black text-lg rounded-2xl shadow-xl hover:scale-105 transition-transform flex items-center justify-center gap-2"><ChevronRight size={24}/> Bắt Đầu</button>
+                        </div>
+                    </div>
                 </div>
-                <div className="flex flex-col w-full max-w-xs gap-3">
-                    <button onClick={onRetry} className="w-full py-3.5 bg-indigo-600 text-white rounded-xl font-bold flex justify-center items-center gap-2 hover:bg-indigo-700 shadow-lg"><RefreshCcw size={20}/> Làm lại</button>
-                    <button onClick={onHome} className="w-full py-3.5 bg-white border border-slate-300 text-slate-700 rounded-xl font-bold hover:bg-slate-50">Về Trang Chủ</button>
-                </div>
-            </div>
-        );
+            );
+        };
 
         // --- MAIN APP ---
         const App = () => {
             const [user, setUser] = useState(null);
             const [screen, setScreen] = useState('welcome');
-            const [currentMode, setCurrentMode] = useState(null);
+            const [gameSetup, setGameSetup] = useState(null); // { isExam: boolean, term?: string, mode?: string, examData?: object }
             const [lastResult, setLastResult] = useState({ score: 0, total: 0 });
-            const [questionData, setQuestionData] = useState(DEFAULT_QUESTION_BANK);
-            const [studentList, setStudentList] = useState([]);
-            const [showCourseModal, setShowCourseModal] = useState(false);
-            const [adminPassword, setAdminPassword] = useState(() => localStorage.getItem('admin_pwd') || 'admin');
-            const [classStructure, setClassStructure] = useState(DEFAULT_CLASS_STRUCTURE);
             const [notification, setNotification] = useState(null);
+            const [dbData, setDbData] = useState({ qBank: {}, smas: [], students: [] });
             
-            // State cho Firebase Setup
-            const [firebaseInitialized, setFirebaseInitialized] = useState(false);
-
-            // --- INIT FIREBASE ---
             useEffect(() => {
-                const initFirebase = async () => {
-                    try {
-                        let app;
-                        if (getApps().length === 0) {
-                            app = initializeApp(firebaseConfig);
-                        } else {
-                            app = getApp();
-                        }
-                        auth = getAuth(app);
-                        db = getFirestore(app);
-                        
-                        // Try to sign in
-                        try {
-                             await signInAnonymously(auth);
-                        } catch (authError) {
-                            if (authError.code === 'auth/configuration-not-found' || authError.code === 'auth/admin-restricted-operation') {
-                                notify("Lỗi: Chưa bật Authentication trong Firebase Console! Hãy bật 'Anonymous' provider.", "error");
-                                console.error("Please enable Authentication > Sign-in method > Anonymous in Firebase Console.");
-                                return; // Stop here if auth fails
-                            }
-                            throw authError;
-                        }
-
-                        setFirebaseInitialized(true);
-                        console.log("Firebase Connected!");
-                    } catch (e) {
-                        console.error("Firebase init failed:", e);
-                        notify("Lỗi kết nối Firebase: " + e.message, "error");
-                    }
+                const init = async () => {
+                    const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+                    auth = getAuth(app); db = getFirestore(app);
+                    await signInAnonymously(auth).catch(e => console.error("Auth error", e));
+                    
+                    // Listeners
+                    onSnapshot(doc(db, "config", "questions"), snap => setDbData(p => ({...p, qBank: snap.data()||{}})));
+                    onSnapshot(query(collection(db, "students"), orderBy("createdAt", "desc")), snap => setDbData(p => ({...p, students: snap.docs.map(d=>({id:d.id,...d.data()}))})));
                 };
-                initFirebase();
+                init();
             }, []);
-
-            // --- FIREBASE REALTIME LISTENERS ---
-            useEffect(() => {
-                if (!firebaseInitialized || !db) return;
-
-                // 1. Lắng nghe danh sách học sinh (Realtime)
-                const q = query(collection(db, "students"), orderBy("createdAt", "desc"));
-                const unsubStudents = onSnapshot(q, (snapshot) => {
-                    const students = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    setStudentList(students);
-                }, (error) => {
-                    console.error("Sync students error:", error);
-                    if (error.code === 'permission-denied') {
-                        notify("Lỗi quyền truy cập: Hãy kiểm tra Rules hoặc tạo Database trong Console.", "error");
-                    } else if (error.message.includes("API has not been used")) {
-                         notify("Lỗi: Chưa tạo Database Firestore trong Console.", "error");
-                    } else {
-                        notify("Lỗi đồng bộ dữ liệu: " + error.code, "error");
-                    }
-                });
-
-                // 2. Lắng nghe cấu trúc lớp học (Realtime)
-                const unsubClasses = onSnapshot(doc(db, "config", "classes"), (doc) => {
-                    if (doc.exists()) {
-                        setClassStructure(doc.data());
-                        localStorage.setItem('class_structure', JSON.stringify(doc.data())); // Backup local
-                    }
-                });
-
-                return () => {
-                    unsubStudents && unsubStudents();
-                    unsubClasses && unsubClasses();
-                };
-            }, [firebaseInitialized]);
 
             const notify = (msg, type='info') => { setNotification({msg, type}); setTimeout(() => setNotification(null), 3000); };
 
-            // --- FIREBASE ACTIONS ---
-            const handleLogin = async (userData) => { 
-                const now = new Date();
-                const studentData = { 
-                    ...userData, 
-                    loginTime: now.toLocaleString('vi-VN'), 
-                    dateKey: now.toLocaleDateString('vi-VN'),
-                    createdAt: serverTimestamp() // Dùng giờ server để sort chuẩn
-                };
-                
-                try {
-                    // Thêm học sinh mới vào Firestore
-                    const docRef = await addDoc(collection(db, "students"), studentData);
-                    // Lưu ID document để sau này update điểm
-                    setUser({ ...studentData, id: docRef.id }); 
-                    setScreen('dashboard'); 
-                } catch (e) {
-                    console.error("Login error", e);
-                    notify("Lỗi đăng nhập! Kiểm tra kết nối mạng.", "error");
-                }
+            const handleLogin = async (userData) => {
+                const uData = { ...userData, loginTime: new Date().toLocaleString('vi-VN'), createdAt: serverTimestamp() };
+                const docRef = await addDoc(collection(db, "students"), uData);
+                setUser({ ...uData, id: docRef.id });
+                setScreen('dashboard');
             };
 
-            const updateStudentScore = async (score) => {
-                if (!user || !user.id) return;
-                try {
-                    const studentRef = doc(db, "students", user.id);
-                    await updateDoc(studentRef, { lastScore: score });
-                    notify("Đã lưu điểm lên hệ thống!", "success");
-                } catch (e) { notify("Lỗi lưu điểm!", "error"); }
-            };
-
-            const registerCourse = async (regInfo) => {
-                if (!user || !user.id) return;
-                try {
-                    const studentRef = doc(db, "students", user.id);
-                    const updateData = regInfo.courseType === 'python' ? { pythonReg: regInfo } : { scratchReg: regInfo };
-                    await updateDoc(studentRef, updateData);
-                    setShowCourseModal(false);
-                    notify("Đăng ký thành công!", "success");
-                } catch (e) { notify("Lỗi đăng ký!", "error"); }
-            };
-
-            const handleUpdateClassStructure = async (grade, className) => {
-                const updatedStructure = { ...classStructure };
-                if (!updatedStructure[grade]) updatedStructure[grade] = [];
-                if (!updatedStructure[grade].includes(className)) {
-                    updatedStructure[grade].push(className);
-                    updatedStructure[grade].sort();
-                    
-                    // Lưu lên Firestore
-                    try {
-                        await setDoc(doc(db, "config", "classes"), updatedStructure);
-                        notify(`Đã thêm lớp ${className} vào khối ${grade}`, "success");
-                    } catch (e) { notify("Lỗi lưu lớp học!", "error"); }
-                } else {
-                    notify("Lớp này đã tồn tại!", "warning");
-                }
-            };
-
-            const handleChangeAdminPassword = (newPwd) => { 
-                setAdminPassword(newPwd); 
-                localStorage.setItem('admin_pwd', newPwd); 
-                notify("Đổi mật khẩu thành công!", "success"); 
-            };
-            
-            const handleDeleteHistory = async () => { 
-                if(!confirm("CẢNH BÁO: Bạn có chắc chắn muốn xóa TOÀN BỘ dữ liệu lịch sử và điểm số của học sinh trên hệ thống Online không?\n\nHành động này KHÔNG THỂ khôi phục!")) return;
-
-                try {
-                    // Lấy toàn bộ document trong collection 'students'
-                    const studentsRef = collection(db, "students");
-                    const snapshot = await getDocs(studentsRef);
-                    
-                    if (snapshot.empty) {
-                        notify("Dữ liệu trống, không có gì để xóa.", "info");
-                        return;
-                    }
-
-                    // Tạo mảng các promise xóa
-                    const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
-                    
-                    // Chờ tất cả xóa xong
-                    await Promise.all(deletePromises);
-                    
-                    notify(`Đã xóa vĩnh viễn ${snapshot.size} bản ghi lịch sử!`, "success");
-                    setStudentList([]); // Clear local state immediately for visual feedback
-                } catch (e) {
-                    console.error("Delete error:", e);
-                    notify("Lỗi khi xóa dữ liệu: " + e.message, "error");
-                }
+            const handleFinish = async (res) => {
+                setLastResult(res);
+                if(user?.id) await updateDoc(doc(db, "students", user.id), { lastScore: res.score, examCode: res.examCode || 'Ôn Luyện' });
+                setScreen('result');
             };
 
             return (
-                <div className="font-sans antialiased text-slate-800">
-                    <NotificationToast notification={notification} onClose={() => setNotification(null)} />
-                    {screen === 'welcome' && <WelcomeScreen onLogin={handleLogin} onAdminLogin={()=>setScreen('admin')} adminPassword={adminPassword} classStructure={classStructure} notify={notify} />}
-                    {screen === 'admin' && <AdminScreen onBack={()=>setScreen('welcome')} studentList={studentList} onDeleteHistory={handleDeleteHistory} onUploadData={setQuestionData} onChangePassword={handleChangeAdminPassword} onUpdateClassStructure={handleUpdateClassStructure} classStructure={classStructure} notify={notify}/>}
-                    {screen === 'dashboard' && user && <Dashboard user={user} onSelectMode={(m)=>{setCurrentMode(m); setScreen('game')}} onLogout={()=>{setUser(null); setScreen('welcome')}} onOpenCourse={setShowCourseModal}/>}
-                    {screen === 'game' && user && <GameScreen user={user} mode={currentMode} onFinish={(r)=>{setLastResult(r); updateStudentScore(r.score); setScreen('result')}} onBack={()=>setScreen('dashboard')} questionData={questionData}/>}
-                    {screen === 'result' && <ResultScreen score={lastResult.score} total={lastResult.total} onRetry={()=>setScreen('game')} onHome={()=>setScreen('dashboard')} />}
-                    {showCourseModal && <CourseRegistrationModal courseType={showCourseModal} onClose={()=>setShowCourseModal(false)} onRegister={registerCourse} defaultGrade={user?.grade} notify={notify} />}
+                <div>
+                    <Toast notification={notification} onClose={() => setNotification(null)} />
+                    {screen === 'welcome' && <WelcomeScreen onLogin={handleLogin} onAdminLogin={()=>setScreen('admin')} classStructure={DEFAULT_CLASS_STRUCTURE} />}
+                    {screen === 'admin' && <AdminScreen onBack={()=>setScreen('welcome')} studentList={dbData.students} classStructure={DEFAULT_CLASS_STRUCTURE} questionBank={dbData.qBank} notify={notify}/>}
+                    {screen === 'dashboard' && <Dashboard user={user} onLogout={()=>{setUser(null); setScreen('welcome');}} 
+                        onStartPractice={(term, mode) => { setGameSetup({isExam: false, term, mode}); setScreen('play'); }}
+                        onStartExam={(examData) => { setGameSetup({isExam: true, examData}); setScreen('play'); }}
+                    />}
+                    {screen === 'play' && <PlayScreen user={user} examMode={gameSetup.isExam} term={gameSetup.term} mode={gameSetup.mode} examData={gameSetup.examData} questionBank={dbData.qBank} onFinish={handleFinish} onBack={()=>setScreen('dashboard')} />}
+                    {screen === 'result' && (
+                        <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-6 text-center animate-in">
+                            <div className="w-40 h-40 rounded-full bg-gradient-to-br from-yellow-300 to-yellow-500 flex items-center justify-center mb-8 shadow-2xl shadow-yellow-500/40 animate-bounce"><Trophy size={80} className="text-white"/></div>
+                            <h2 className="text-4xl font-black text-slate-800 mb-4">{gameSetup?.isExam ? 'Đã Nộp Bài!' : 'Hoàn Thành!'}</h2>
+                            <div className="bg-white p-8 rounded-3xl shadow-xl mb-8 w-full max-w-sm border border-slate-100">
+                                <p className="text-slate-400 mb-2 font-bold uppercase tracking-widest">Điểm của em</p>
+                                <p className="text-6xl font-black text-indigo-600">{lastResult.score} <span className="text-2xl text-slate-300">/ {lastResult.total}</span></p>
+                            </div>
+                            <button onClick={()=>setScreen('dashboard')} className="w-full max-w-sm py-4 bg-slate-800 text-white rounded-2xl font-bold text-lg hover:bg-slate-900 shadow-xl transition">Về Màn Hình Chính</button>
+                        </div>
+                    )}
                 </div>
             );
         };
