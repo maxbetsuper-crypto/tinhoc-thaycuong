@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Hệ Thống Dạy & Học Tin Học - Thầy Lê Đình Cương</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script type="importmap">
@@ -40,11 +43,11 @@
         import React, { useState, useEffect, useRef } from 'react';
         import { createRoot } from 'react-dom/client';
         import { 
-            BookOpen, CheckCircle, XCircle, Trophy, User, Smartphone, Play, 
+            BookOpen, CheckCircle, XCircle, Trophy, User, Users, Smartphone, Play, 
             RefreshCcw, Star, Edit3, HelpCircle, Upload, Download, Loader2, 
             Lock, List, Trash2, LogOut, Database, Code, Monitor, Phone, Key, 
             Gamepad2, X, AlertCircle, Info, Clock, ShieldCheck, FileSpreadsheet,
-            ChevronRight, BookMarked, PenTool, Timer
+            ChevronRight, BookMarked, PenTool, Timer, Settings
         } from 'lucide-react';
         
         // --- FIREBASE IMPORTS ---
@@ -112,8 +115,39 @@
             );
         };
 
+        const ChangePasswordModal = ({ onClose, onChangePassword, notify }) => {
+            const [newPwd, setNewPwd] = useState("");
+            const [confirmPwd, setConfirmPwd] = useState("");
+            const [error, setError] = useState("");
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (newPwd.length < 4) return setError("Mật khẩu phải có ít nhất 4 ký tự.");
+                if (newPwd !== confirmPwd) return setError("Mật khẩu xác nhận không khớp.");
+                onChangePassword(newPwd);
+                onClose();
+            };
+
+            return (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[70] flex items-center justify-center p-4 animate-in">
+                    <div className="bg-white p-8 rounded-3xl shadow-xl w-full max-w-sm animate-slide-up">
+                        <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2"><Key size={24} className="text-indigo-600" /> Đổi Mật Khẩu Admin</h3>
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div><label className="block text-sm font-semibold text-slate-600 mb-1">Mật khẩu mới</label><input type="password" value={newPwd} onChange={(e) => setNewPwd(e.target.value)} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500" autoFocus /></div>
+                            <div><label className="block text-sm font-semibold text-slate-600 mb-1">Xác nhận mật khẩu</label><input type="password" value={confirmPwd} onChange={(e) => setConfirmPwd(e.target.value)} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500" /></div>
+                            {error && <p className="text-rose-500 text-sm font-medium">{error}</p>}
+                            <div className="flex gap-3 pt-4">
+                                <button type="button" onClick={onClose} className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition">Hủy</button>
+                                <button type="submit" className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 shadow-md transition">Lưu</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            );
+        };
+
         // --- QUẢN TRỊ VIÊN (ADMIN SCREEN) ---
-        const AdminScreen = ({ onBack, studentList, classStructure, notify, questionBank, updateQuestionBank }) => {
+        const AdminScreen = ({ onBack, studentList, classStructure, notify, questionBank, updateQuestionBank, onChangePassword, onUpdateClassStructure, onDeleteHistory }) => {
             const [tab, setTab] = useState('onluyen');
             const [exams, setExams] = useState([]);
             const [smasData, setSmasData] = useState([]);
@@ -121,6 +155,11 @@
             const smasInputRef = useRef(null);
             const examInputRef = useRef(null);
             const [newExam, setNewExam] = useState({ code: '', grade: 8, duration: 45, isAutoSync: true });
+            
+            // Settings States
+            const [showPwdModal, setShowPwdModal] = useState(false);
+            const [newClassInput, setNewClassInput] = useState({ grade: 6, name: "" });
+            const [isDeleting, setIsDeleting] = useState(false);
 
             // Fetch Realtime Data for Admin
             useEffect(() => {
@@ -186,7 +225,6 @@
                         await addDoc(collection(db, "exams"), examData);
 
                         if(newExam.isAutoSync) {
-                            // TODO: Merge into practice bank logic here (Simplified for size limit)
                             notify("Đã tạo đề thi và tạo đề cương tự động!", "success");
                         } else {
                             notify(`Đã tạo phòng thi: ${examData.code} với ${examQs.length} câu`, "success");
@@ -206,7 +244,6 @@
                         const wb = window.XLSX.read(evt.target.result, {type:'binary'});
                         const rows = window.XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
                         let count = 0;
-                        // Batch write simplified
                         for (let r of rows) {
                             if(r['Họ và tên'] && r['Lớp']) {
                                 await addDoc(collection(db, "smas"), { name: String(r['Họ và tên']).trim(), className: String(r['Lớp']).trim(), dob: r['Ngày sinh']||'' });
@@ -233,6 +270,7 @@
                             <button onClick={()=>setTab('thi')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition ${tab==='thi'?'bg-indigo-700 font-bold':'hover:bg-indigo-800 text-indigo-200'}`}><Timer size={18}/> Quản lý Thi Online</button>
                             <button onClick={()=>setTab('smas')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition ${tab==='smas'?'bg-indigo-700 font-bold':'hover:bg-indigo-800 text-indigo-200'}`}><Users size={18}/> Dữ liệu SMAS</button>
                             <button onClick={()=>setTab('history')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition ${tab==='history'?'bg-indigo-700 font-bold':'hover:bg-indigo-800 text-indigo-200'}`}><List size={18}/> Bảng điểm</button>
+                            <button onClick={()=>setTab('settings')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition ${tab==='settings'?'bg-indigo-700 font-bold':'hover:bg-indigo-800 text-indigo-200'}`}><Settings size={18}/> Cài đặt Hệ thống</button>
                         </nav>
                         <div className="p-4 border-t border-indigo-800">
                             <button onClick={onBack} className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-indigo-800 hover:bg-rose-600 rounded-xl transition font-bold"><LogOut size={16}/> Thoát</button>
@@ -243,6 +281,40 @@
                     <div className="flex-1 p-8 overflow-y-auto">
                         <div className="max-w-5xl mx-auto bg-white rounded-3xl shadow-sm border border-slate-200 p-8">
                             
+                            {/* TAB: CÀI ĐẶT (Đổi MK, Thêm Lớp, Xóa DB) */}
+                            {tab === 'settings' && (
+                                <div className="animate-in">
+                                    <h3 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2"><Settings className="text-indigo-600"/> Cài đặt Hệ thống</h3>
+                                    
+                                    <div className="grid md:grid-cols-2 gap-6">
+                                        <div className="bg-slate-50 p-6 rounded-2xl shadow-sm border border-slate-200">
+                                            <h4 className="font-bold text-slate-800 mb-2 flex items-center gap-2"><Key size={18}/> Bảo mật Admin</h4>
+                                            <p className="text-sm text-slate-500 mb-4">Thay đổi mật khẩu truy cập trang Quản trị viên.</p>
+                                            <button onClick={() => setShowPwdModal(true)} className="px-6 py-2 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition">Đổi Mật Khẩu</button>
+                                        </div>
+
+                                        <div className="bg-slate-50 p-6 rounded-2xl shadow-sm border border-slate-200">
+                                            <h4 className="font-bold text-slate-800 mb-2 flex items-center gap-2"><Database size={18}/> Quản lý Lớp học</h4>
+                                            <div className="flex gap-2 mb-2">
+                                                <select value={newClassInput.grade} onChange={e=>setNewClassInput({...newClassInput, grade: Number(e.target.value)})} className="border border-slate-300 rounded-xl px-3 py-2 text-sm bg-white"><option value={6}>Khối 6</option><option value={7}>Khối 7</option><option value={8}>Khối 8</option><option value={9}>Khối 9</option></select>
+                                                <input type="text" placeholder="Tên lớp (VD: 6A1)" value={newClassInput.name} onChange={e=>setNewClassInput({...newClassInput, name: e.target.value})} className="flex-1 border border-slate-300 rounded-xl px-3 py-2 text-sm bg-white outline-none focus:border-indigo-400"/>
+                                                <button onClick={()=>{if(newClassInput.name.trim()) { onUpdateClassStructure(newClassInput.grade, newClassInput.name.trim().toUpperCase()); setNewClassInput({...newClassInput, name: ""}); }}} className="bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm hover:bg-emerald-700">Thêm</button>
+                                            </div>
+                                            <p className="text-xs text-slate-500">Tổng số lớp hiện tại: {Object.values(classStructure).flat().length}</p>
+                                        </div>
+
+                                        <div className="bg-rose-50 p-6 rounded-2xl shadow-sm border border-rose-200 md:col-span-2">
+                                            <h4 className="font-bold text-rose-600 mb-2 flex items-center gap-2"><Trash2 size={18}/> Dọn dẹp dữ liệu</h4>
+                                            <p className="text-sm text-slate-600 mb-4">Xóa toàn bộ lịch sử điểm số và thông tin học sinh đã làm bài. Hành động này không thể hoàn tác.</p>
+                                            <button onClick={async () => { setIsDeleting(true); await onDeleteHistory(); setIsDeleting(false); }} disabled={isDeleting} className="px-6 py-3 bg-rose-600 text-white font-bold rounded-xl hover:bg-rose-700 shadow-md transition flex items-center gap-2">
+                                                {isDeleting ? <Loader2 size={18} className="animate-spin"/> : <Trash2 size={18}/>} Xóa Toàn Bộ Lịch Sử
+                                            </button>
+                                        </div>
+                                    </div>
+                                    {showPwdModal && <ChangePasswordModal onClose={() => setShowPwdModal(false)} onChangePassword={onChangePassword} notify={notify} />}
+                                </div>
+                            )}
+
                             {/* TAB: ÔN LUYỆN */}
                             {tab === 'onluyen' && (
                                 <div className="animate-in">
@@ -307,7 +379,7 @@
                                 </div>
                             )}
 
-                            {/* TAB: HISTORY (Giữ nguyên logic cũ, chỉ đổi UI) */}
+                            {/* TAB: HISTORY */}
                             {tab === 'history' && (
                                 <div className="animate-in">
                                     <h3 className="text-2xl font-bold text-slate-800 mb-6">Lịch sử Làm Bài</h3>
@@ -506,7 +578,7 @@
             );
         };
 
-        const WelcomeScreen = ({ onLogin, onAdminLogin, classStructure }) => {
+        const WelcomeScreen = ({ onLogin, onAdminLogin, adminPassword, classStructure }) => {
             const [name, setName] = useState("");
             const [grade, setGrade] = useState(8);
             const [className, setClassName] = useState("");
@@ -526,7 +598,7 @@
                                 <ShieldCheck size={40} className="mx-auto mb-4 text-indigo-600"/>
                                 <h3 className="font-bold text-lg mb-4">Đăng nhập Admin</h3>
                                 <input type="password" value={pwd} onChange={e=>setPwd(e.target.value)} placeholder="Mật khẩu" className="w-full p-3 border rounded-xl mb-4 text-center font-mono outline-none focus:border-indigo-500"/>
-                                <div className="flex gap-2"><button onClick={()=>setShowAdmin(false)} className="flex-1 bg-slate-100 py-3 rounded-xl font-bold text-slate-600">Hủy</button><button onClick={()=>{if(pwd==='admin') onAdminLogin(); else alert('Sai mật khẩu!');}} className="flex-1 bg-indigo-600 py-3 rounded-xl font-bold text-white shadow-lg shadow-indigo-200">Vào</button></div>
+                                <div className="flex gap-2"><button onClick={()=>setShowAdmin(false)} className="flex-1 bg-slate-100 py-3 rounded-xl font-bold text-slate-600">Hủy</button><button onClick={()=>{if(pwd===adminPassword) onAdminLogin(); else alert('Sai mật khẩu!');}} className="flex-1 bg-indigo-600 py-3 rounded-xl font-bold text-white shadow-lg shadow-indigo-200">Vào</button></div>
                             </div>
                         </div>
                     )}
@@ -545,6 +617,7 @@
                             <button onClick={()=>name.trim() ? onLogin({name, grade, className}) : alert('Nhập tên!')} className="w-full py-4 mt-2 bg-white text-indigo-900 font-black text-lg rounded-2xl shadow-xl hover:scale-105 transition-transform flex items-center justify-center gap-2"><ChevronRight size={24}/> Bắt Đầu</button>
                         </div>
                     </div>
+                    <p className="mt-8 text-sm text-yellow-400 relative z-10 font-bold tracking-wider">© PHIÊN BẢN PRO MỚI NHẤT</p>
                 </div>
             );
         };
@@ -556,6 +629,12 @@
             const [gameSetup, setGameSetup] = useState(null); // { isExam: boolean, term?: string, mode?: string, examData?: object }
             const [lastResult, setLastResult] = useState({ score: 0, total: 0 });
             const [notification, setNotification] = useState(null);
+            
+            const [adminPassword, setAdminPassword] = useState(() => localStorage.getItem('admin_pwd') || 'admin');
+            const [classStructure, setClassStructure] = useState(() => {
+                const saved = localStorage.getItem('class_structure');
+                return saved ? JSON.parse(saved) : DEFAULT_CLASS_STRUCTURE;
+            });
             const [dbData, setDbData] = useState({ qBank: {}, smas: [], students: [] });
             
             useEffect(() => {
@@ -566,6 +645,12 @@
                     
                     // Listeners
                     onSnapshot(doc(db, "config", "questions"), snap => setDbData(p => ({...p, qBank: snap.data()||{}})));
+                    onSnapshot(doc(db, "config", "classes"), snap => {
+                        if (snap.exists()) {
+                            setClassStructure(snap.data());
+                            localStorage.setItem('class_structure', JSON.stringify(snap.data()));
+                        }
+                    });
                     onSnapshot(query(collection(db, "students"), orderBy("createdAt", "desc")), snap => setDbData(p => ({...p, students: snap.docs.map(d=>({id:d.id,...d.data()}))})));
                 };
                 init();
@@ -589,8 +674,35 @@
             return (
                 <div>
                     <Toast notification={notification} onClose={() => setNotification(null)} />
-                    {screen === 'welcome' && <WelcomeScreen onLogin={handleLogin} onAdminLogin={()=>setScreen('admin')} classStructure={DEFAULT_CLASS_STRUCTURE} />}
-                    {screen === 'admin' && <AdminScreen onBack={()=>setScreen('welcome')} studentList={dbData.students} classStructure={DEFAULT_CLASS_STRUCTURE} questionBank={dbData.qBank} notify={notify}/>}
+                    {screen === 'welcome' && <WelcomeScreen onLogin={handleLogin} onAdminLogin={()=>setScreen('admin')} adminPassword={adminPassword} classStructure={classStructure} />}
+                    {screen === 'admin' && <AdminScreen 
+                        onBack={()=>setScreen('welcome')} 
+                        studentList={dbData.students} 
+                        classStructure={classStructure} 
+                        questionBank={dbData.qBank} 
+                        notify={notify}
+                        onChangePassword={(pwd) => { setAdminPassword(pwd); localStorage.setItem('admin_pwd', pwd); notify("Đổi mật khẩu thành công!", "success"); }}
+                        onUpdateClassStructure={async (grade, className) => {
+                            const updated = { ...classStructure };
+                            if (!updated[grade]) updated[grade] = [];
+                            if (!updated[grade].includes(className)) {
+                                updated[grade].push(className);
+                                updated[grade].sort();
+                                try {
+                                    await setDoc(doc(db, "config", "classes"), updated);
+                                    notify(`Đã thêm lớp ${className} vào khối ${grade}`, "success");
+                                } catch (e) { notify("Lỗi lưu lớp!", "error"); }
+                            } else notify("Lớp đã tồn tại!", "warning");
+                        }}
+                        onDeleteHistory={async () => {
+                            if(!confirm("CẢNH BÁO: Xóa TOÀN BỘ dữ liệu lịch sử? Hành động không thể hoàn tác!")) return;
+                            try {
+                                const snap = await getDocs(collection(db, "students"));
+                                await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
+                                notify("Đã xóa vĩnh viễn toàn bộ lịch sử!", "success");
+                            } catch(e) { notify("Lỗi xóa: " + e.message, "error"); }
+                        }}
+                    />}
                     {screen === 'dashboard' && <Dashboard user={user} onLogout={()=>{setUser(null); setScreen('welcome');}} 
                         onStartPractice={(term, mode) => { setGameSetup({isExam: false, term, mode}); setScreen('play'); }}
                         onStartExam={(examData) => { setGameSetup({isExam: true, examData}); setScreen('play'); }}
